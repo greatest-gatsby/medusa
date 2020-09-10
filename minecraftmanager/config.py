@@ -11,9 +11,11 @@ def process_config(args):
     if (args.action == 'get'):
         get_config_value(args.property)
     elif (args.action == 'set'):
-        print('set')
+        set_config_value(args.property, args.value)
     elif (args.action == 'init'):
         init_config()
+    elif (args.action == 'where'):
+        print(get_config_location())
     else:
         print('Please specify a subcommand for "config"')
 
@@ -29,7 +31,21 @@ def get_config_value(key):
         print("Failure")
 
 def set_config_value(key, value):
-    print('')
+    try:
+        obj = json.load(open(get_config_location(), 'r'))
+    except:
+        print('Error opening config for write')
+
+    if (key in obj):
+        obj[key] = value
+        try:
+            with open(get_config_location(), 'w') as file:
+                json.dump(obj, file)
+        except:
+            print('Error writing updated config to disk')
+    else:
+        print('No key named', key)
+    
 
 def init_config():
     # create directory if not exists

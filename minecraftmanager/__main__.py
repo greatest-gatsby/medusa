@@ -19,6 +19,7 @@ config_subparsers = config_parser.add_subparsers(dest='action')
 config_get_parser = config_subparsers.add_parser('get')
 config_set_parser = config_subparsers.add_parser('set')
 config_init_parser = config_subparsers.add_parser('init')
+config_where_parser = config_subparsers.add_parser('where')
 
 config_get_parser.add_argument('property', help='Property to get/set')
 config_set_parser.add_argument('property', help='Property to get/set')
