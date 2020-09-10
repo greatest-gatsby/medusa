@@ -9,19 +9,21 @@ APP_AUTHOR = 'Jay Rode'
 
 def process_config(args):
     if (args.action == 'get'):
-        get_config_value(args.action)
+        get_config_value(args.property)
     elif (args.action == 'set'):
         print('set')
     elif (args.action == 'init'):
         init_config()
+    else:
+        print('Please specify a subcommand for "config"')
 
 def get_config_value(key):
     try:
         dat = open(get_config_location(), 'r')
-        obj = json.loads(dat)
+        obj = json.load(dat)
         print(obj['save_data'])
     except:
-        print("")
+        print("Failure")
 
 def set_config_value(key, value):
     print('')
