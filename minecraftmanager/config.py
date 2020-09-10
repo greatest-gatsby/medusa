@@ -21,7 +21,10 @@ def get_config_value(key):
     try:
         dat = open(get_config_location(), 'r')
         obj = json.load(dat)
-        print(obj['save_data'])
+        if (key in obj):
+            print(obj[key])
+        else:
+            print("No key named", key)
     except:
         print("Failure")
 
