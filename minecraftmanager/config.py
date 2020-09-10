@@ -29,14 +29,22 @@ def set_config_value(key, value):
 def init_config():
     # create directory if not exists
     if not (os.path.isdir(os.path.dirname(get_config_location()))):
-        os.makedirs(os.path.dirname(get_config_location()))
+        try:
+            os.makedirs(os.path.dirname(get_config_location()))
+        except:
+            print('Error occured while creating config directory')
+            return
     
     # open and read
-    with open('data/medusa.json', 'r') as file:
-        new_data = file.readlines()
-        # open and write
-        with open(get_config_location(), 'w') as target:
-            target.writelines(new_data)
+    try:
+        with open('data/medusa.json', 'r') as file:
+            new_data = file.readlines()
+            # open and write
+            with open(get_config_location(), 'w') as target:
+                target.writelines(new_data)
+    except:
+        print('Error occured while writing new config')
+        return
     
     # print result
     print('Created new Medusa config at', get_config_location())
