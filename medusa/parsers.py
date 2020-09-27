@@ -32,7 +32,11 @@ def add_server_parsers(main_parser, main_subparser):
 
 
 def add_status_parsers(main_parser, main_subparser):
-    pass
+    status_parser = subparsers.add_parser('status')
+    status_parser.add_argument('--server', '-s',
+        help='Name of the server')
 
 def add_user_parsers(main_parser, main_subparser):
-    pass
+    user_parser = subparsers.add_parser('user')
+    user_subparsers = user_parser.add_subparsers(help='Manage Users', dest='user', description='Manage users')
+    user_list_parser = user_subparsers.add_parser('list')
