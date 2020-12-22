@@ -3,12 +3,14 @@ import io
 import json
 import os
 from pprint import pprint
+import argparse
 
 import jsonpickle
 
 from . import config
 
 servers = []
+serv_subparser = None
 
 class ServerType(Enum):
     NOTASERVER = 0
@@ -29,11 +31,13 @@ def process_server(args):
     if (args.action == 'create'):
         create_server(args.path, args.type, args.alias)
     elif (args.action == 'remove'):
-        print('')
+        print('REMOV???')
     elif (args.action == 'list'):
         list_servers()
     elif (args.action == 'scan'):
         scan_servers()
+    else:
+        serv_subparser.print_help()
 
 # Search the data directory for any unregistered servers
 def scan_servers():

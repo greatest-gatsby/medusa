@@ -17,7 +17,7 @@ def add_config_parsers(main_parser, main_subparser):
     config_init_parser.add_argument('-p', '--path', help='Path to directory or file to use as application storage')
 
 def add_server_parsers(main_parser, main_subparser):
-    server_parser = subparsers.add_parser('server')
+    server_parser = main_subparser.add_parser('server')
     server_subparsers = server_parser.add_subparsers(dest='action')
 
     server_create_parser = server_subparsers.add_parser('create')
@@ -30,13 +30,14 @@ def add_server_parsers(main_parser, main_subparser):
     server_list_parser = server_subparsers.add_parser('list')
     server_scan_parser = server_subparsers.add_parser('scan')
 
-
+    server.serv_subparser = server_parser
+    
 def add_status_parsers(main_parser, main_subparser):
-    status_parser = subparsers.add_parser('status')
+    status_parser = main_subparser.add_parser('status')
     status_parser.add_argument('--server', '-s',
         help='Name of the server')
 
 def add_user_parsers(main_parser, main_subparser):
-    user_parser = subparsers.add_parser('user')
+    user_parser = main_subparser.add_parser('user')
     user_subparsers = user_parser.add_subparsers(help='Manage Users', dest='user', description='Manage users')
     user_list_parser = user_subparsers.add_parser('list')
