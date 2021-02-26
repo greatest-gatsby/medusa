@@ -4,6 +4,8 @@ import os
 
 import appdirs
 
+from . import filebases
+
 APP_NAME = 'medusa'
 APP_AUTHOR = 'Jay Rode'
 CONFIG_NAME = 'medusa.json'
@@ -34,9 +36,17 @@ def get_config_value(key):
 
 def set_config_value(key, value):
     try:
-        obj = json.load(open(get_config_location(), 'r'))
+        if not (os.path.getsize(get_config_location())):
+            print('Config is empty -- generate a new one with `medusa config init`')
+            exit(code=1)
+        file = open(get_config_location(), 'r')
+        obj = json.load(file)
+    except json.JSONDecodeError as jer:
+        print('Error opening config for write -- file is malformed or corrupt')
+        exit(code=1)
     except:
-        print('Error opening config for write')
+        print("Unknown error opening config for write")
+        raise
 
     if (key in obj):
         obj[key] = value
@@ -64,19 +74,16 @@ def init_config(path):
             print('Error occured while creating config directory')
             return
     
-    # open and read
+    # open and write
     try:
-        with open('data/medusa.json', 'r') as file:
-            new_data = file.readlines()
-            # open and write
-            with open(get_config_location(), 'w') as target:
-                target.writelines(new_data)
+        with open(get_config_location(), 'w') as file:
+            file.write(filebases.DATA)
     except:
         print('Error occured while writing new config')
         return
     
     # print result
-    print('Created new Medusa config at', get_config_location())
+    print('Created new Medusa config at', os.path.abspath(get_config_location()))
 
     # open data
     try:
@@ -91,12 +98,14 @@ def init_config(path):
     print('Created new Medusa data at', get_data_location())
 
 def get_config_location():
+    return "data/medusa.json"
     return os.path.join(
         appdirs.site_config_dir(APP_NAME, APP_AUTHOR),
         'medusa.json'
     )
 
 def get_data_location():
+    return "data/medusa-data.json"
     return os.path.join(
         appdirs.site_config_dir(APP_NAME, APP_AUTHOR),
         'medusa-data.json'

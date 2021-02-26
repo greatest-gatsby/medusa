@@ -8,7 +8,7 @@ import argparse
 import jsonpickle
 
 from . import config
-
+from . import filebases
 servers = []
 serv_subparser = None
 
@@ -27,7 +27,7 @@ class Server:
     def __str__(self):
         return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
 
-def process_server(args):
+def process_server(args, servers):
     if (args.action == 'create'):
         create_server(args.path, args.type, args.alias)
     elif (args.action == 'remove'):
@@ -35,13 +35,15 @@ def process_server(args):
     elif (args.action == 'list'):
         list_servers()
     elif (args.action == 'scan'):
-        scan_servers()
+        scan_directory_for_servers(servers, "")
     else:
         serv_subparser.print_help()
 
 # Search the data directory for any unregistered servers
-def scan_servers():
-    data_dir = config.get_config_value('server_directory')
+def scan_directory_for_servers(servers, scan_path = ""):
+    if (scan_path == ""):
+        data_dir = config.get_config_value('server_directory')
+    
     print('Scanning for existing servers in', data_dir)
 
     dataset = os.scandir(data_dir)
@@ -49,10 +51,11 @@ def scan_servers():
     if (dataset is None):
         print('Didn\'t find any servers')
     else:
+        if servers != None and len(servers) > 0:
         # remove entries for servers that no longer exist
-        for saved in reversed(servers):
-            if not os.path.isdir(saved.Path):
-                servers.remove(saved)
+            for saved in reversed(servers):
+                if not os.path.isdir(saved.Path):
+                    servers.remove(saved)
 
         # scan for servers in the server directory
         for dir in dataset:
@@ -66,7 +69,8 @@ def scan_servers():
                 continue
             
             # record any successes
-            if (register_server(dir.path ,dir_type)):
+            regSuccess, servers = register_server(servers, dir.path ,dir_type)
+            if regSuccess:
                 new_count += 1
 
     print('Found {} servers'.format(new_count))
@@ -86,65 +90,92 @@ def list_servers():
 
 # Get a list of the Servers stored in the config file
 def get_servers_from_data_file():
+    if not os.path.isfile(config.get_config_location()):
+        return []
     try:
-        with open(config.get_data_location(), 'r') as f:
+        with open(config.get_config_location(), 'r') as f:
             data_string = f.read()
-            data_set = jsonpickle.decode(data_string)['servers']
+            data_set = jsonpickle.decode(data_string)
+            data_set = data_set['server_registry']
             return data_set
     except json.JSONDecodeError as jde:
         print('Error decoding data file')
-        return
-    except AttributeError as ae:
+        return []
+    except KeyError as ae:
         print('Could not find "servers" node')
-        return
+        return data_set
 
 # Create a new server
 def create_server(path, type = None, alias = None):
     pass
 
-# Register an existing server with the application
-def register_server(path: str, srv_type: ServerType, alias: str = None):
+# Register an existing server with the application, returning a TUPLE
+# 0: boolean indicating success (true) or failure (false)
+# 1: collection of servers
+def register_server(servers, path: str, srv_type: ServerType, alias: str = None):
+    if servers == None:
+        servers = []
+
     new = Server()
     new.Path = os.path.abspath(path)
     new.Type = srv_type
     new.Alias = alias
+    if alias:
+        alias = alias.strip()
 
-    for srv in servers:
-        if (srv.Path == new.Path):
-            print("Server with path '{}' already registered".format(srv.Path))
-            return False
-        if (srv.Alias and srv.Alias == new.Alias):
-            print("Server with alias '{}' already registered".format(srv.Alias))
-            return False
-    
+    if servers is not None and len(servers) > 0:
+        for srv in servers:
+            if (srv.Path == new.Path):
+                print("Server with path '{}' already registered".format(srv.Path))
+                return False, servers
+            if (srv.Alias == new.Alias and srv.Alias):
+                print("Server with alias '{}' already registered".format(srv.Alias))
+                return False, servers    
+
     servers.append(new)
 
     try:
-        with open(config.get_data_location(), 'r') as data_file:
+        # Read in current config
+        with open(config.get_config_location(), 'r') as data_file:
             try:
                 data = jsonpickle.decode(data_file.read())
             except json.JSONDecodeError as ex:
                 print('Error reading servers file while registering new server', ex)
-                return False
+                return False, servers
         
-        with open(config.get_data_location(), 'w') as data_file:
+        # Write .medusa to the server directory
+        with open(os.path.join(new.Path,'.medusa'), 'w') as dotmedusa:
             try:
-                data['servers'] = servers
+                # If alias is given, then the base dotmedusa file must be modified before writing to disk
+                if new.Alias:
+                    dm = json.loads(filebases.DOT_MEDUSA)
+                    dm["metadata"]["alias"] = new.Alias
+                    dotmedusa.write(json.dumps(dm))
+                else:
+                    dotmedusa.write(filebases.DOT_MEDUSA)
+            except:
+                print('Error writing .medusa to', os.path.join(new.Path,'.medusa') ,'. Does this user have permission to write there?')
+                return False, servers
+
+        # Write entry to server_reigstry in config
+        with open(config.get_config_location(), 'w') as data_file:
+            try:
+                data['server_registry'] = servers
                 encoded = jsonpickle.encode(data)
                 data_file.write(encoded)
-
-                # success
-                print('Registered', srv_type, 'server at', path)
-                return True
             except json.JSONEncodeError as ex:
                 print('Error writing servers file while registering new server', ex)
-                return False
+                return False, servers
+
+        # success
+        print('Registered', srv_type, 'server at', path)
+        return True, servers
 
     except json.JSONDecodeError as ex:
         print("Error writing servers to disk", ex)
-        return False
+        return False, servers
 
-# determine a server's type given the path to the server directory
+# returns a server's type given the path to the server directory
 def determine_server_type(srv_dir: str):
     srv_dir = os.path.abspath(srv_dir)
     for dir_path, dir_names, f_names in os.walk(srv_dir):

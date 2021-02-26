@@ -29,6 +29,7 @@ def add_server_parsers(main_parser, main_subparser):
     server_remove_parser = server_subparsers.add_parser('remove')
     server_list_parser = server_subparsers.add_parser('list')
     server_scan_parser = server_subparsers.add_parser('scan')
+    server_scan_parser.add_argument('-p', '--path', help='Path to directory to be scanned')
 
     server.serv_subparser = server_parser
     

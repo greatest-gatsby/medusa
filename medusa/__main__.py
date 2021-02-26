@@ -28,7 +28,8 @@ parsers.add_status_parsers(parser, subparsers)
 parsers.add_user_parsers(parser, subparsers)
 
 # init submodules
-server.servers = server.get_servers_from_data_file()
+servers = server.get_servers_from_data_file()
+
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -37,4 +38,4 @@ if __name__ == '__main__':
     elif (args.command == 'status'):
         status.process_status(args)
     elif (args.command == 'server'):
-        server.process_server(args)
+        server.process_server(args, servers)
