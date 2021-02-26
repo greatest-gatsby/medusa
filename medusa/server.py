@@ -3,6 +3,7 @@ import io
 import json
 import os
 from pprint import pprint
+from prettytable import PrettyTable
 import argparse
 
 import jsonpickle
@@ -79,9 +80,13 @@ def scan_directory_for_servers(servers, scan_path = ""):
 
 # Print the list of servers to console
 def list_servers(servers):
+    x = PrettyTable()
+    x.field_names = ['Alias', 'Path', 'Type']
+    x.align = 'l'
     for srv in servers:
-        print(srv)
-    pass
+        x.add_row([srv.Alias, os.path.relpath(srv.Path, config.get_config_value('server_directory')), srv.Type])
+
+    print(x)
 
     #for root, dirs, files in os.walk(data_dir):
     #    print('Root:', root)
