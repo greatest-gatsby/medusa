@@ -1,4 +1,7 @@
-# Copied from https://github.com/github/gitignore/blob/master/Python.gitignore on 9/7/20200
+# Medusa-specific entries
+data/
+
+# Copied from https://github.com/github/gitignore/blob/master/Python.gitignore on 9/7/2020
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
