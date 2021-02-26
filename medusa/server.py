@@ -9,7 +9,7 @@ import jsonpickle
 
 from . import config
 from . import filebases
-servers = []
+
 serv_subparser = None
 
 class ServerType(Enum):
@@ -33,7 +33,7 @@ def process_server(args, servers):
     elif (args.action == 'remove'):
         print('REMOV???')
     elif (args.action == 'list'):
-        list_servers()
+        list_servers(servers)
     elif (args.action == 'scan'):
         scan_directory_for_servers(servers, "")
     else:
@@ -78,7 +78,7 @@ def scan_directory_for_servers(servers, scan_path = ""):
 
 
 # Print the list of servers to console
-def list_servers():
+def list_servers(servers):
     for srv in servers:
         print(srv)
     pass
@@ -89,7 +89,7 @@ def list_servers():
     #    print('Files:', files)
 
 # Get a list of the Servers stored in the config file
-def get_servers_from_data_file():
+def get_servers_from_config():
     if not os.path.isfile(config.get_config_location()):
         return []
     try:

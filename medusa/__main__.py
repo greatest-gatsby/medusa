@@ -28,7 +28,7 @@ parsers.add_status_parsers(parser, subparsers)
 parsers.add_user_parsers(parser, subparsers)
 
 # init submodules
-servers = server.get_servers_from_data_file()
+servers = server.get_servers_from_config()
 
 
 if __name__ == '__main__':

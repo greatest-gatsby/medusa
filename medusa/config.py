@@ -85,18 +85,6 @@ def init_config(path):
     # print result
     print('Created new Medusa config at', os.path.abspath(get_config_location()))
 
-    # open data
-    try:
-        with open('data/medusa-data.json', 'r') as file:
-            new_data = file.readlines()
-            with open(get_data_location(), 'w') as target:
-                target.writelines(new_data)
-    except:
-        print('Error writing new data file')
-        return
-    
-    print('Created new Medusa data at', get_data_location())
-
 def get_config_location():
     return "data/medusa.json"
     return os.path.join(
