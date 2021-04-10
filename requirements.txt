@@ -1,3 +1,4 @@
 appdirs==1.4.4
 jsonpickle==2.0.0
 prettytable>=2.0.0
+pyfakefs==4.4.0
