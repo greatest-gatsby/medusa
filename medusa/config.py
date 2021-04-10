@@ -11,28 +11,39 @@ APP_AUTHOR = 'Jay Rode'
 CONFIG_NAME = 'medusa.json'
 
 def process_config(args):
-    if (args.action == 'get'):
-        val = get_config_value(args.property)
+    if len(args) == 0:
+        print('Please specify a subcommand for "config"')
+        return
+
+    if (args[0] == 'get'):
+        if len(args) < 2:
+            print('No key specified')
+            return
+        val = get_config_value(args[1])
         if (val is None):
-            print("No key named", args.property)
+            print('No key named', args[1])
         else:
             print(val)
-    elif (args.action == 'set'):
+    elif (args[0] == 'set'):
         set_config_value(args.property, args.value)
-    elif (args.action == 'init'):
+    elif (args[0] == 'init'):
         init_config(args.path)
-    elif (args.action == 'where'):
+    elif (args[0] == 'where'):
         print(get_config_location())
     else:
-        print('Please specify a subcommand for "config"')
+        print('Unknown command', args[0])
 
+# Returns the value specified by the key, or None if key was not found
 def get_config_value(key):
+    if key is None or key == "":
+        print('No key specified')
+        return
     try:
         dat = open(get_config_location(), 'r')
         obj = json.load(dat)
         return obj[key]            
     except:
-        print("Failure")
+        print("No key", key)
 
 def set_config_value(key, value):
     try:

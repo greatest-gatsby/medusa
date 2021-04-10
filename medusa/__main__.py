@@ -32,10 +32,21 @@ servers = server.get_servers_from_config()
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
-    if (args.command == 'config'):
-        config.process_config(args)
-    elif (args.command == 'status'):
+    # args = parser.parse_args()
+    # screw argparse
+    # we split off each of the first words, then parse the command once we hit a full command word
+
+    if len(sys.argv) < 2:
+        cmd = ""
+    else:
+        cmd = sys.argv[1]
+    
+    
+    if (cmd == 'config'):
+        config.process_config(sys.argv[2:])
+    elif (cmd == 'status'):
         status.process_status(args)
-    elif (args.command == 'server'):
+    elif (cmd == 'server'):
         server.process_server(args, servers)
+    else:
+        print("HELP HERE")
