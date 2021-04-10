@@ -39,9 +39,9 @@ def get_config_value(key):
         print('No key specified')
         return
     try:
-        dat = open(get_config_location(), 'r')
-        obj = json.load(dat)
-        return obj[key]            
+        with open(get_config_location(), 'r') as dat:
+            obj = json.load(dat)
+            return obj[key]            
     except:
         print("No key", key)
 
