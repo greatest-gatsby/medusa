@@ -42,8 +42,11 @@ def get_config_value(key):
         with open(get_config_location(), 'r') as dat:
             obj = json.load(dat)
             return obj[key]            
+    except FileNotFoundError:
+        print('Config not found at', get_config_location())
+        raise
     except:
-        print("No key", key)
+        print('No key', key)
 
 def set_config_value(key, value):
     try:
@@ -54,7 +57,10 @@ def set_config_value(key, value):
         obj = json.load(file)
     except json.JSONDecodeError as jer:
         print('Error opening config for write -- file is malformed or corrupt')
-        exit(code=1)
+        raise
+    except FileNotFoundError as fnf:
+        print('Config not found at', get_config_location())
+        raise
     except:
         print("Unknown error opening config for write")
         raise
