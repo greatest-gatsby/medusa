@@ -10,43 +10,30 @@ from . import parsers
 from . import server
 from . import status
 
-# top-level parser
-parser = argparse.ArgumentParser(description='Manage multiple Spigot Minecraft servers')
-subparsers = parser.add_subparsers(help='Available commands', dest='command',
-    title='command', description='Main command to execute')
-
-# 'config' command
-parsers.add_config_parsers(parser, subparsers)
-
-# 'server' command
-parsers.add_server_parsers(parser, subparsers)
-
-# 'status' command
-parsers.add_status_parsers(parser, subparsers)
-
-# 'user' command
-parsers.add_user_parsers(parser, subparsers)
-
 # init submodules
 servers = server.get_servers_from_config()
 
 
 if __name__ == '__main__':
-    # args = parser.parse_args()
-    # screw argparse
-    # we split off each of the first words, then parse the command once we hit a full command word
+
+    # inspect command, then handle in the respective submodule
+    # pop the subcommand from argv because argparse will be used
+    # on argv and is only expecting the command options, we are triggering the command itself
 
     if len(sys.argv) < 2:
         cmd = ""
     else:
         cmd = sys.argv[1]
+        #print(sys.argv)
+        sys.argv = sys.argv[2:]
+        #print(sys.argv)
     
     
     if (cmd == 'config'):
-        config.process_config(sys.argv[2:])
+        config.process_config(sys.argv)
     elif (cmd == 'status'):
         status.process_status(args)
     elif (cmd == 'server'):
-        server.process_server(args, servers)
+        server.process_server(sys.argv, servers)
     else:
         print("HELP HERE")

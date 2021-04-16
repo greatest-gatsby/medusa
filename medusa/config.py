@@ -5,48 +5,61 @@ import os
 import appdirs
 
 from . import filebases
+from . import parsers
 
 APP_NAME = 'medusa'
 APP_AUTHOR = 'Jay Rode'
 CONFIG_NAME = 'medusa.json'
 
 def process_config(args):
-    if len(args) == 0:
-        print('Please specify a subcommand for "config"')
-        return
+    parser = parsers.get_config_parsers()
+    cmd = parser.parse_args(args)
 
-    if (args[0] == 'get'):
+    if (cmd.action == 'get'):
         if len(args) < 2:
             print('No key specified')
             return
-        val = get_config_value(args[1])
+        val = get_config_value(cmd.property)
         if (val is None):
-            print('No key named', args[1])
+            print('No key named', cmd.property)
         else:
             print(val)
-    elif (args[0] == 'set'):
-        set_config_value(args.property, args.value)
-    elif (args[0] == 'init'):
+    elif (cmd.action == 'set'):
+        set_config_value(cmd.property, cmd.value)
+    elif (cmd.action == 'init'):
         init_config(args.path)
-    elif (args[0] == 'where'):
+    elif (cmd.action == 'where'):
         print(get_config_location())
     else:
-        print('Unknown command', args[0])
+        parser.print_usage()
+        print('Please specify a subcommand for `config`')
 
-# Returns the value specified by the key, or None if key was not found
-def get_config_value(key):
+def get_config_value(key: str):
+    """
+    Returns the value specified by the key, or None if key was not found.
+    
+    Parameters
+    ----------
+    key : str
+        The key whose value will be retrieved. If the string is null
+        or empty, then a KeyError will be raised.
+
+    
+    Raises
+    ------
+        KeyError
+            If the given key is null or empty.
+    """
     if key is None or key == "":
-        print('No key specified')
-        return
+        raise KeyError
     try:
         with open(get_config_location(), 'r') as dat:
             obj = json.load(dat)
             return obj[key]            
     except FileNotFoundError:
-        print('Config not found at', get_config_location())
         raise
     except:
-        print('No key', key)
+        return
 
 def set_config_value(key, value):
     try:
