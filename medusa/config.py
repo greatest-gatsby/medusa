@@ -12,6 +12,14 @@ APP_AUTHOR = 'Jay Rode'
 CONFIG_NAME = 'medusa.json'
 
 def process_config(args):
+    """
+    Consumes command-line arguments and branches into whatever command specified by the user.
+    Nothing is returned and no error is thrown.
+
+    Parameters
+    ----------
+        args : list of str
+    """
     parser = parsers.get_config_parsers()
     cmd = parser.parse_args(args)
 
@@ -62,6 +70,22 @@ def get_config_value(key: str):
         return
 
 def set_config_value(key, value):
+    """
+    Sets the value of a given key in the Medusa config.
+
+    Parameters
+    ----------
+        key : str
+            The key whose value will be set. If the string is null
+            or empty, then a KeyError will be raised.
+        value : Any
+            The value to set. 
+    
+    Raises
+    ------
+        KeyError
+            If the given key is null or empty
+    """
     try:
         if not (os.path.getsize(get_config_location())):
             print('Config is empty -- generate a new one with `medusa config init`')
