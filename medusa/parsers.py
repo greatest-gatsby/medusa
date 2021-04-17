@@ -32,8 +32,8 @@ def get_config_parsers():
 
     return config_parser
 
-def add_server_parsers(main_parser, main_subparser):
-    server_parser = main_subparser.add_parser('server')
+def get_server_parsers():
+    server_parser = subparsers.add_parser('server')
     server_subparsers = server_parser.add_subparsers(dest='action')
 
     server_create_parser = server_subparsers.add_parser('create')
@@ -47,7 +47,7 @@ def add_server_parsers(main_parser, main_subparser):
     server_scan_parser = server_subparsers.add_parser('scan')
     server_scan_parser.add_argument('-p', '--path', help='Path to directory to be scanned')
 
-    server.serv_subparser = server_parser
+    return server_parser
     
 def add_status_parsers(main_parser, main_subparser):
     status_parser = main_subparser.add_parser('status')

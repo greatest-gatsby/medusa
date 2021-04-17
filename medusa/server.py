@@ -10,6 +10,7 @@ import jsonpickle
 
 from . import config
 from . import filebases
+from . import parsers
 
 serv_subparser = None
 
@@ -29,6 +30,9 @@ class Server:
         return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
 
 def process_server(args, servers):
+    parser = parsers.get_server_parsers()
+    args = parser.parse_args(args)
+
     if (args.action == 'create'):
         create_server(args.path, args.type, args.alias)
     elif (args.action == 'remove'):
@@ -38,7 +42,7 @@ def process_server(args, servers):
     elif (args.action == 'scan'):
         scan_directory_for_servers(servers, "")
     else:
-        serv_subparser.print_help()
+        parser.print_help()
 
 # Search the data directory for any unregistered servers
 def scan_directory_for_servers(servers, scan_path = ""):
@@ -87,11 +91,6 @@ def list_servers(servers):
         x.add_row([srv.Alias, os.path.relpath(srv.Path, config.get_config_value('server_directory')), srv.Type])
 
     print(x)
-
-    #for root, dirs, files in os.walk(data_dir):
-    #    print('Root:', root)
-    #    print('Dirs:', dirs)
-    #    print('Files:', files)
 
 # Get a list of the Servers stored in the config file
 def get_servers_from_config():
