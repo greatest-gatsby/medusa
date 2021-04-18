@@ -46,3 +46,35 @@ class ParsersTestCase(TestCase):
         
         args_parsed = parser.parse_args(args)
         assert args_parsed.action == 'scan'
+
+    def test_parser_config_get(self):
+        args = ['get', 'test-key']
+        parser = medusa.parsers.get_config_parsers()
+
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.action == 'get'
+        assert args_parsed.property == 'test-key'
+
+    def test_parser_config_set(self):
+        args = ['set', 'test-key', 'test-value']
+        parser = medusa.parsers.get_config_parsers()
+
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.action == 'set'
+        assert args_parsed.property == 'test-key'
+        assert args_parsed.value == 'test-value'
+
+    def test_parser_config_init(self):
+        args = ['init']
+        parser = medusa.parsers.get_config_parsers()
+
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.action == 'init'
+
+    def test_parser_config_where(self):
+        args = ['where']
+        parser = medusa.parsers.get_config_parsers()
+
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.action == 'where'
+
