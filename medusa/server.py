@@ -10,8 +10,10 @@ import jsonpickle
 
 from . import config
 from . import filebases
+from . import parsers
 
 serv_subparser = None
+_servers = []
 
 class ServerType(Enum):
     NOTASERVER = 0
@@ -28,17 +30,21 @@ class Server:
     def __str__(self):
         return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
 
-def process_server(args, servers):
+def process_server(args):
+    parser = parsers.get_server_parsers()
+    args = parser.parse_args(args)
+    _servers = get_servers_from_config()
+
     if (args.action == 'create'):
         create_server(args.path, args.type, args.alias)
     elif (args.action == 'remove'):
         print('REMOV???')
     elif (args.action == 'list'):
-        list_servers(servers)
+        list_servers(_servers)
     elif (args.action == 'scan'):
-        scan_directory_for_servers(servers, "")
+        scan_directory_for_servers(_servers, "")
     else:
-        serv_subparser.print_help()
+        parser.print_help()
 
 # Search the data directory for any unregistered servers
 def scan_directory_for_servers(servers, scan_path = ""):
@@ -75,7 +81,6 @@ def scan_directory_for_servers(servers, scan_path = ""):
                 new_count += 1
 
     print('Found {} servers'.format(new_count))
-    pass
 
 
 # Print the list of servers to console
@@ -88,13 +93,13 @@ def list_servers(servers):
 
     print(x)
 
-    #for root, dirs, files in os.walk(data_dir):
-    #    print('Root:', root)
-    #    print('Dirs:', dirs)
-    #    print('Files:', files)
-
-# Get a list of the Servers stored in the config file
 def get_servers_from_config():
+    """
+    Returns a list of all the servers registered in Medusa's config.
+    Since this function will always read from disk, `get_servers()`
+    is generally a better way to retrieve the servers, as it prefers
+    to read from memory when possible.
+    """
     if not os.path.isfile(config.get_config_location()):
         return []
     try:
@@ -110,14 +115,46 @@ def get_servers_from_config():
         print('Could not find "servers" node')
         return data_set
 
+def get_servers():
+    """
+    Returns a list of all of the servers registered with Medusa.
+    """
+    if _servers is None:
+        _servers = get_servers_from_config()
+    
+    return _servers
+
 # Create a new server
 def create_server(path, type = None, alias = None):
     pass
 
-# Register an existing server with the application, returning a TUPLE
-# 0: boolean indicating success (true) or failure (false)
-# 1: collection of servers
+# Remove and delete an existing server
+def remove_server(identifier):
+    pass
+
 def register_server(servers, path: str, srv_type: ServerType, alias: str = None):
+    """
+    Links Medusa to a Minecraft server that already exists, adding an entry in the
+    central save file and creating a `.medusa` file in the server directory.
+
+    Parameters
+    ----------
+        servers : list of Server
+            The servers registered with Medusa.
+    
+    Returns
+    -------
+        bool : success
+            `True` if the operation succeeded, or `False` if the server was already registered.
+
+    Raises
+    ------
+        JsonEncodeError, JsonDecodeError
+            If there is an error encoding or decoding the config file
+        
+        IOError
+            If there is an error reading or writing the config file from/to disk.
+    """
     if servers == None:
         servers = []
 
@@ -131,11 +168,9 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
     if servers is not None and len(servers) > 0:
         for srv in servers:
             if (srv.Path == new.Path):
-                print("Server with path '{}' already registered".format(srv.Path))
-                return False, servers
+                return False
             if (srv.Alias == new.Alias and srv.Alias):
-                print("Server with alias '{}' already registered".format(srv.Alias))
-                return False, servers    
+                return False
 
     servers.append(new)
 
@@ -145,8 +180,8 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
             try:
                 data = jsonpickle.decode(data_file.read())
             except json.JSONDecodeError as ex:
-                print('Error reading servers file while registering new server', ex)
-                return False, servers
+                print('Error reading servers file while registering new server')
+                raise
         
         # Write .medusa to the server directory
         with open(os.path.join(new.Path,'.medusa'), 'w') as dotmedusa:
@@ -160,7 +195,7 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
                     dotmedusa.write(filebases.DOT_MEDUSA)
             except:
                 print('Error writing .medusa to', os.path.join(new.Path,'.medusa') ,'. Does this user have permission to write there?')
-                return False, servers
+                raise
 
         # Write entry to server_reigstry in config
         with open(config.get_config_location(), 'w') as data_file:
@@ -170,15 +205,15 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
                 data_file.write(encoded)
             except json.JSONEncodeError as ex:
                 print('Error writing servers file while registering new server', ex)
-                return False, servers
+                raise
 
         # success
         print('Registered', srv_type, 'server at', path)
-        return True, servers
+        return True
 
     except json.JSONDecodeError as ex:
         print("Error writing servers to disk", ex)
-        return False, servers
+        raise
 
 # returns a server's type given the path to the server directory
 def determine_server_type(srv_dir: str):

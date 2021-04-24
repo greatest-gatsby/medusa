@@ -5,36 +5,87 @@ import os
 import appdirs
 
 from . import filebases
+from . import parsers
 
 APP_NAME = 'medusa'
 APP_AUTHOR = 'Jay Rode'
 CONFIG_NAME = 'medusa.json'
 
 def process_config(args):
-    if (args.action == 'get'):
-        val = get_config_value(args.property)
+    """
+    Consumes command-line arguments and branches into whatever command specified by the user.
+    Nothing is returned and no error is thrown.
+
+    Parameters
+    ----------
+        args : list of str
+    """
+    parser = parsers.get_config_parsers()
+    cmd = parser.parse_args(args)
+
+    if (cmd.action == 'get'):
+        if len(args) < 2:
+            print('No key specified')
+            return
+        val = get_config_value(cmd.property)
         if (val is None):
-            print("No key named", args.property)
+            print('No key named', cmd.property)
         else:
             print(val)
-    elif (args.action == 'set'):
-        set_config_value(args.property, args.value)
-    elif (args.action == 'init'):
+    elif (cmd.action == 'set'):
+        set_config_value(cmd.property, cmd.value)
+    elif (cmd.action == 'init'):
         init_config(args.path)
-    elif (args.action == 'where'):
+    elif (cmd.action == 'where'):
         print(get_config_location())
     else:
-        print('Please specify a subcommand for "config"')
+        parser.print_usage()
+        print('Please specify a subcommand for `config`')
 
-def get_config_value(key):
+def get_config_value(key: str):
+    """
+    Returns the value specified by the key, or None if key was not found.
+    
+    Parameters
+    ----------
+    key : str
+        The key whose value will be retrieved. If the string is null
+        or empty, then a KeyError will be raised.
+
+    
+    Raises
+    ------
+        KeyError
+            If the given key is null or empty.
+    """
+    if key is None or key == "":
+        raise KeyError
     try:
-        dat = open(get_config_location(), 'r')
-        obj = json.load(dat)
-        return obj[key]            
+        with open(get_config_location(), 'r') as dat:
+            obj = json.load(dat)
+            return obj[key]            
+    except FileNotFoundError:
+        raise
     except:
-        print("Failure")
+        return
 
 def set_config_value(key, value):
+    """
+    Sets the value of a given key in the Medusa config.
+
+    Parameters
+    ----------
+        key : str
+            The key whose value will be set. If the string is null
+            or empty, then a KeyError will be raised.
+        value : Any
+            The value to set. 
+    
+    Raises
+    ------
+        KeyError
+            If the given key is null or empty
+    """
     try:
         if not (os.path.getsize(get_config_location())):
             print('Config is empty -- generate a new one with `medusa config init`')
@@ -43,7 +94,10 @@ def set_config_value(key, value):
         obj = json.load(file)
     except json.JSONDecodeError as jer:
         print('Error opening config for write -- file is malformed or corrupt')
-        exit(code=1)
+        raise
+    except FileNotFoundError as fnf:
+        print('Config not found at', get_config_location())
+        raise
     except:
         print("Unknown error opening config for write")
         raise
