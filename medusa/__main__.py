@@ -11,7 +11,7 @@ from . import server
 from . import status
 
 # init submodules
-servers = server.get_servers_from_config()
+# servers = server.get_servers_from_config()
 
 
 if __name__ == '__main__':
@@ -25,15 +25,15 @@ if __name__ == '__main__':
     else:
         cmd = sys.argv[1]
         #print(sys.argv)
-        sys.argv = sys.argv[2:]
+        args = sys.argv[2:]
         #print(sys.argv)
     
     
     if (cmd == 'config'):
-        config.process_config(sys.argv)
+        config.process_config(args)
     elif (cmd == 'status'):
         status.process_status(args)
     elif (cmd == 'server'):
-        server.process_server(sys.argv, servers)
+        server.process_server(args)
     else:
         print("HELP HERE")

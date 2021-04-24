@@ -20,11 +20,11 @@ class ServerTestCase(TestCase):
         mock_parser = unittest.mock.Mock()
         mock_parser_getter.return_value = mock_parser
 
-        medusa.server.process_server(args, args)
+        medusa.server.process_server(args)
 
         mock_parser_getter.assert_called_once()
         mock_parser.parse_args.assert_called_once()
-        
+
 
     # Verifies that the server parser prints help w/o raising if no command is given
     def test_parser_server_noCommand(self):
