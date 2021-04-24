@@ -136,9 +136,19 @@ def get_servers_from_config():
     Since this function will always read from disk, `get_servers()`
     is generally a better way to retrieve the servers, as it prefers
     to read from memory when possible.
+
+    Raises
+    ------
+        FileNotFoundError
+            If the config file at the path given by `get_config_location()` does not exist.
+
+    Returns
+    -------
+        List of Servers
+            All the Servers registered in the config file.
     """
     if not os.path.isfile(config.get_config_location()):
-        return []
+        raise FileNotFoundError(config.get_config_location(), 'is not a file.')
     try:
         with open(config.get_config_location(), 'r') as f:
             data_string = f.read()
@@ -156,6 +166,7 @@ def get_servers():
     """
     Returns a list of all of the servers registered with Medusa.
     """
+    global _servers
     if _servers is None:
         _servers = get_servers_from_config()
     
