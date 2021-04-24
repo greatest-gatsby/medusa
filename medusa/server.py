@@ -50,9 +50,9 @@ def process_server(args):
     elif (args.action == 'remove'):
         print('REMOV???')
     elif (args.action == 'list'):
-        list_servers(_servers)
+        list_servers()
     elif (args.action == 'scan'):
-        scan_directory_for_servers(_servers, "")
+        scan_directory_for_servers("")
     else:
         parser.print_help()
 
@@ -112,15 +112,21 @@ def scan_directory_for_servers(scan_path: str = ""):
 
 
 
-def list_servers(servers):
+def list_servers():
     """
-    Prints a table of the servers to the console.
+    Prints a table of the servers to the console. The paths are
+    constructed relative to the server directory.
     """
+    if len(_servers) == 0:
+        print('No registered servers')
+        return
+
     x = PrettyTable()
     x.field_names = ['Alias', 'Path', 'Type']
     x.align = 'l'
-    for srv in servers:
-        x.add_row([srv.Alias, os.path.relpath(srv.Path, config.get_config_value('server_directory')), srv.Type])
+    srv_dir = config.get_config_value('server_directory')
+    for srv in _servers:
+        x.add_row([srv.Alias, os.path.relpath(srv.Path, srv_dir), srv.Type])
 
     print(x)
 
