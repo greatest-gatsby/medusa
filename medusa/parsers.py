@@ -43,6 +43,7 @@ def get_server_parsers():
         choices=['vanilla', 'forge', 'spigot', 'paper'])
 
     server_remove_parser = server_subparsers.add_parser('remove')
+    server_remove_parser.add_argument('identifier', help='Alias or path of the server to remove')
     server_list_parser = server_subparsers.add_parser('list')
     server_scan_parser = server_subparsers.add_parser('scan')
     server_scan_parser.add_argument('-p', '--path', help='Path to directory to be scanned')

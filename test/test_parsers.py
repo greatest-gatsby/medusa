@@ -27,11 +27,12 @@ class ParsersTestCase(TestCase):
         assert args_parsed.type == 'forge'
 
     def test_parser_server_remove(self):
-        args = ['remove']
+        args = ['remove', 'my alias']
         parser = medusa.parsers.get_server_parsers()
         
         args_parsed = parser.parse_args(args)
         assert args_parsed.action == 'remove'
+        assert args_parsed.identifier == 'my alias'
 
     def test_parser_server_list(self):
         args = ['list']

@@ -66,7 +66,7 @@ def process_server(args):
     if (args.action == 'create'):
         create_server(args.path, args.type, args.alias)
     elif (args.action == 'remove'):
-        print('REMOV???')
+        deregister_server(args.identifier)
     elif (args.action == 'list'):
         list_servers()
     elif (args.action == 'scan'):
