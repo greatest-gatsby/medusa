@@ -30,6 +30,24 @@ class Server:
     def __str__(self):
         return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
 
+    def __eq__(self, other):
+        return self.is_identifiable_by(other)
+
+    def is_identifiable_by(this, identifier: str):
+        """
+        Determines whether the given string is a valid identifier for this server.
+        Works by matching Alias then Path, in that order.
+
+        Returns
+        ------
+            boolean
+                `True` if the given string identifies this server, else `False`.
+        """
+        if this.Alias == identifier or this.Path == identifier:
+            return True
+        
+        return False
+
 def process_server(args):
     """
     Process CLI arguments for `server` commands. This method should really
@@ -117,7 +135,7 @@ def list_servers():
     Prints a table of the servers to the console. The paths are
     constructed relative to the server directory.
     """
-    if len(_servers) == 0:
+    if len(get_servers()) == 0:
         print('No registered servers')
         return
 
@@ -125,7 +143,7 @@ def list_servers():
     x.field_names = ['Alias', 'Path', 'Type']
     x.align = 'l'
     srv_dir = config.get_config_value('server_directory')
-    for srv in _servers:
+    for srv in get_servers():
         x.add_row([srv.Alias, os.path.relpath(srv.Path, srv_dir), srv.Type])
 
     print(x)
@@ -176,9 +194,45 @@ def get_servers():
 def create_server(path, type = None, alias = None):
     pass
 
-# Remove and delete an existing server
-def remove_server(identifier):
-    pass
+def deregister_server(identifier: str):
+    """
+    Removes an existing server from Medusa's saved data and stops tracking it.
+
+    Parameters
+    ----------
+        identifier: str
+            Path or alias of server to be deregistered.
+    
+    Raises
+    ------
+        KeyError
+            If no known server matches the given identifier.
+        ValueError
+            If the given identifier is None or empty.
+    """
+    # validate arguments
+    if identifier is None or identifier.strip() == "":
+        raise ValueError('Identifier None or empty')
+    
+    # get identified server or raise error
+    target = None
+    for srv in get_servers():
+        if srv.is_identifiable_by(identifier):
+            target = srv
+            _servers.remove(srv)
+            break
+    if target is None:
+        raise KeyError('No server identifiable by', identifier)
+
+    # remove from config
+    with open(config.get_config_location(), 'r+') as conf:
+        conf_json = jsonpickle.decode(conf.read())
+        conf_json['server_registry'].remove(target)
+        conf.seek(0)
+        conf.write(jsonpickle.encode(conf_json))
+        conf.truncate()
+
+    
 
 def register_server(path: str, srv_type: ServerType, alias: str = None):
     """
@@ -307,11 +361,11 @@ def determine_server_type(srv_dir: str):
                     strat_jar =  ServerType.FORGE
                 elif 'paper' in file:
                     strat_jar = ServerType.PAPER
-                else:
-                    strat_jar = ServerType.VANILLA
+                #else:
+                #    strat_jar = ServerType.VANILLA
             
             # strat 2 - yml files
-            if file.endswith('.yml') or file.endswith('yaml'):
+            if file.endswith('.yml') or file.endswith('.yaml'):
                 if 'spigot' in file:
                     strat_yml =  ServerType.SPIGOT
                 elif 'forge' in file:

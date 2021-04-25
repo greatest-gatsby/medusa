@@ -20,6 +20,15 @@ class ServerTestCase(TestCase):
         self.setUpPyfakefs()
         medusa.server._servers = []
 
+    def plant_server(self, servers):
+         # Write data to fake fs
+        file = jsonpickle.decode(medusa.filebases.DATA)
+        file['server_registry'] = servers
+        file_str = jsonpickle.encode(file)
+        self.fs.create_file(medusa.config.get_config_location(), contents = file_str)
+        medusa.server._servers = servers
+
+
     # Verifies that the `server` command invokes the server CLI parser
     @unittest.mock.patch('medusa.server.get_servers_from_config', return_value=[])
     @unittest.mock.patch('medusa.parsers.get_server_parsers')
@@ -43,12 +52,13 @@ class ServerTestCase(TestCase):
         mock_print.assert_called_once_with('No registered servers')
 
     # Verifies that the list function accesses and prints key server fields
+    @unittest.mock.patch('medusa.config.get_config_value', return_value='/srv')
     @unittest.mock.patch('medusa.server._servers')
     @unittest.mock.patch('builtins.print')
-    def test_server_list_accessesFields(self, mock_print, mock_servers):
+    def test_server_list_accessesFields(self, mock_print, mock_servers, mock_config_get):
         srv1 = medusa.server.Server()
         srv1.Alias = 'Friendly'
-        srv1.Path = '/Test1'
+        srv1.Path = '/srv/friends forever/s1'
         srv1.Type = medusa.server.ServerType.PAPER
 
         medusa.server._servers = [srv1]
@@ -59,7 +69,7 @@ class ServerTestCase(TestCase):
         table = mock_print.call_args.args[0]
 
         assert 'Friendly' in table.get_string(fields=['Alias'])
-        assert 'Test1' in table.get_string(fields=['Path'])
+        assert 'friends forever' + os.path.sep + 's1' in table.get_string(fields=['Path'])
         assert 'PAPER' in table.get_string(fields=['Type'])
 
     # Verifies that the function to retrieve servers from saved entries
@@ -136,11 +146,93 @@ class ServerTestCase(TestCase):
         existing_server.Alias = 'Yo bobby run it'
         existing_server.Path = '/inventive/trail'
         existing_server.Type = medusa.server.ServerType.VANILLA
-        
-        file = jsonpickle.decode(medusa.filebases.DATA)
-        file['server_registry'] = [existing_server]
-        self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
-        medusa.server._servers = medusa.server.get_servers_from_config()
+        self.plant_server([existing_server])
 
         assert not medusa.server.register_server('/inventive/trail', medusa.server.ServerType.VANILLA, 'Yo bobby run it')
 
+    # Verifies that `deregister_server` raises an error if
+    # the given identifier is None or empty
+    def test_server_deregister_throwsIfNullOrEmpty(self):
+        with(self.assertRaises(ValueError)):
+            medusa.server.deregister_server(None)
+        with(self.assertRaises(ValueError)):
+            medusa.server.deregister_server("  ")
+        
+
+    # Verifies that `deregister_server` raises an error if
+    # the given identifier matches no known servers
+    def test_server_deregister_throwsIfNoneFound(self):
+        srv = medusa.server.Server()
+        # Patch the function because we aren't trying to test `is_identifiable_by`,
+        # only that its return value is used properly
+        with unittest.mock.patch.object(srv, 'is_identifiable_by', return_value=False) as patched:
+            medusa.server._servers = [srv]
+            
+            with self.assertRaises(KeyError):
+                medusa.server.deregister_server('conflicting')
+            patched.assert_called_once()
+
+    # Verifies that `deregister_server` writes its changed config to disk
+    def test_server_deregister_writesConfig(self):
+        # Generate data
+        existing_server = medusa.server.Server()
+        existing_server.Alias = 'delete me!'
+        existing_server.Path = '/creative/venture'
+        existing_server.Type = medusa.server.ServerType.FORGE
+        self.plant_server([existing_server])
+        
+        
+        with unittest.mock.patch.object(existing_server, 'is_identifiable_by', return_value=True) as patched:
+            medusa.server._servers = [existing_server]
+            medusa.server.deregister_server('delete me!')
+            # Call once in memory, call once on disk
+            assert patched.call_count == 2
+        
+        with open(medusa.config.get_config_location(), 'r') as conf:
+            txt = conf.read()
+            conf_json = jsonpickle.decode(txt)
+            assert len(conf_json['server_registry']) == 0
+
+    # Verifies that `deregister_server` updates the servers in memory
+    def test_server_deregister_updatesServersInMemory(self):
+        # Generate data
+        existing_server = medusa.server.Server()
+        existing_server.Alias = 'traaash'
+        existing_server.Path = '/unique/outing'
+        existing_server.Type = medusa.server.ServerType.FORGE
+        self.plant_server([existing_server])
+        
+        with unittest.mock.patch.object(existing_server, 'is_identifiable_by', return_value=True) as patched:
+            medusa.server._servers = [existing_server]
+            medusa.server.deregister_server('traaash')
+            # Call once in memory, call once on disk
+            assert patched.call_count == 2
+
+        assert len(medusa.server._servers) == 0
+
+    # Verifies that a server can be identified by its path
+    def test_server_identifiableBy_matchesPath(self):
+        path1 = 'C:/Winders/fabric3'
+        srv1 = medusa.server.Server()
+        srv1.Alias = 'Shorthand'
+        srv1.Path = path1
+        assert srv1.is_identifiable_by(path1)
+        
+        path2 = '/var/www/sukkit'
+        srv2 = medusa.server.Server()
+        srv2.Alias = 'Insinuations'
+        srv2.Path = path2
+        assert srv2.is_identifiable_by(path2)
+
+    def test_server_identifiableBy_matchesAlias(self):
+        alias1 = 'Shorthand'
+        srv1 = medusa.server.Server()
+        srv1.Alias = alias1
+        srv1.Path = 'C:/Winders/fabric3'
+        assert srv1.is_identifiable_by(alias1)
+        
+        alias2 = 'Kids These Days Dont Know Hardcode Minecraft and that Pains Me'
+        srv2 = medusa.server.Server()
+        srv2.Alias = alias2
+        srv2.Path = '/var/www/sukkit'
+        assert srv2.is_identifiable_by(alias2)
