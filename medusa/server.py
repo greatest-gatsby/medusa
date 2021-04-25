@@ -30,7 +30,35 @@ class Server:
     def __str__(self):
         return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
 
+    def __eq__(self, other):
+        return self.is_identifiable_by(other)
+
+    def is_identifiable_by(this, identifier: str):
+        """
+        Determines whether the given string is a valid identifier for this server.
+        Works by matching Alias then Path, in that order.
+
+        Returns
+        ------
+            boolean
+                `True` if the given string identifies this server, else `False`.
+        """
+        if this.Alias == identifier or this.Path == identifier:
+            return True
+        
+        return False
+
 def process_server(args):
+    """
+    Process CLI arguments for `server` commands. This method should really
+    only be called from the main parsing logic; it provides verbose, human-friendly
+    access to methods that can be more easily invoked programatically.
+
+    Parameters
+    ----------
+        args : List of str
+            Command-line arguments from and including the `server` command.
+    """
     parser = parsers.get_server_parsers()
     args = parser.parse_args(args)
     _servers = get_servers_from_config()
@@ -40,14 +68,30 @@ def process_server(args):
     elif (args.action == 'remove'):
         print('REMOV???')
     elif (args.action == 'list'):
-        list_servers(_servers)
+        list_servers()
     elif (args.action == 'scan'):
-        scan_directory_for_servers(_servers, "")
+        scan_directory_for_servers("")
     else:
         parser.print_help()
 
-# Search the data directory for any unregistered servers
-def scan_directory_for_servers(servers, scan_path = ""):
+def scan_directory_for_servers(scan_path: str = ""):
+    """
+    Searches the named directory for any servers that aren't
+    already registered. Returns the new servers that were discovered.
+
+    Parameters
+    ----------
+        scan_path: str
+            Path to the directory to scan. If omitted, the server directory
+            set in the config will be used. File-access exceptions are not caught
+            within this method!
+
+    Returns
+    -------
+        count: Number of added Servers
+            The number of new Servers that were registered with Medusa.
+            Returns zero if no new servers were registered during the scan.
+    """
     if (scan_path == ""):
         data_dir = config.get_config_value('server_directory')
     
@@ -57,12 +101,13 @@ def scan_directory_for_servers(servers, scan_path = ""):
     new_count = 0
     if (dataset is None):
         print('Didn\'t find any servers')
+        return 0
     else:
-        if servers != None and len(servers) > 0:
+        if _servers != None and len(_servers) > 0:
         # remove entries for servers that no longer exist
-            for saved in reversed(servers):
+            for saved in reversed(_servers):
                 if not os.path.isdir(saved.Path):
-                    servers.remove(saved)
+                    _servers.remove(saved)
 
         # scan for servers in the server directory
         for dir in dataset:
@@ -76,20 +121,30 @@ def scan_directory_for_servers(servers, scan_path = ""):
                 continue
             
             # record any successes
-            regSuccess, servers = register_server(servers, dir.path ,dir_type)
+            regSuccess, _servers = register_server(dir.path ,dir_type)
             if regSuccess:
                 new_count += 1
 
-    print('Found {} servers'.format(new_count))
+        print('Found {} servers'.format(new_count))
+        return new_count
 
 
-# Print the list of servers to console
-def list_servers(servers):
+
+def list_servers():
+    """
+    Prints a table of the servers to the console. The paths are
+    constructed relative to the server directory.
+    """
+    if len(get_servers()) == 0:
+        print('No registered servers')
+        return
+
     x = PrettyTable()
     x.field_names = ['Alias', 'Path', 'Type']
     x.align = 'l'
-    for srv in servers:
-        x.add_row([srv.Alias, os.path.relpath(srv.Path, config.get_config_value('server_directory')), srv.Type])
+    srv_dir = config.get_config_value('server_directory')
+    for srv in get_servers():
+        x.add_row([srv.Alias, os.path.relpath(srv.Path, srv_dir), srv.Type])
 
     print(x)
 
@@ -99,9 +154,19 @@ def get_servers_from_config():
     Since this function will always read from disk, `get_servers()`
     is generally a better way to retrieve the servers, as it prefers
     to read from memory when possible.
+
+    Raises
+    ------
+        FileNotFoundError
+            If the config file at the path given by `get_config_location()` does not exist.
+
+    Returns
+    -------
+        List of Servers
+            All the Servers registered in the config file.
     """
     if not os.path.isfile(config.get_config_location()):
-        return []
+        raise FileNotFoundError(config.get_config_location(), 'is not a file.')
     try:
         with open(config.get_config_location(), 'r') as f:
             data_string = f.read()
@@ -110,15 +175,16 @@ def get_servers_from_config():
             return data_set
     except json.JSONDecodeError as jde:
         print('Error decoding data file')
-        return []
+        raise
     except KeyError as ae:
         print('Could not find "servers" node')
-        return data_set
+        raise
 
 def get_servers():
     """
     Returns a list of all of the servers registered with Medusa.
     """
+    global _servers
     if _servers is None:
         _servers = get_servers_from_config()
     
@@ -128,19 +194,58 @@ def get_servers():
 def create_server(path, type = None, alias = None):
     pass
 
-# Remove and delete an existing server
-def remove_server(identifier):
-    pass
+def deregister_server(identifier: str):
+    """
+    Removes an existing server from Medusa's saved data and stops tracking it.
 
-def register_server(servers, path: str, srv_type: ServerType, alias: str = None):
+    Parameters
+    ----------
+        identifier: str
+            Path or alias of server to be deregistered.
+    
+    Raises
+    ------
+        KeyError
+            If no known server matches the given identifier.
+        ValueError
+            If the given identifier is None or empty.
+    """
+    # validate arguments
+    if identifier is None or identifier.strip() == "":
+        raise ValueError('Identifier None or empty')
+    
+    # get identified server or raise error
+    target = None
+    for srv in get_servers():
+        if srv.is_identifiable_by(identifier):
+            target = srv
+            _servers.remove(srv)
+            break
+    if target is None:
+        raise KeyError('No server identifiable by', identifier)
+
+    # remove from config
+    with open(config.get_config_location(), 'r+') as conf:
+        conf_json = jsonpickle.decode(conf.read())
+        conf_json['server_registry'].remove(target)
+        conf.seek(0)
+        conf.write(jsonpickle.encode(conf_json))
+        conf.truncate()
+
+    
+
+def register_server(path: str, srv_type: ServerType, alias: str = None):
     """
     Links Medusa to a Minecraft server that already exists, adding an entry in the
     central save file and creating a `.medusa` file in the server directory.
 
     Parameters
     ----------
-        servers : list of Server
-            The servers registered with Medusa.
+        srv_type: ServerType
+            The type of the server being registered, such as Vanilla or Fabric.
+
+        alias: str (Optional)
+            Human-friendly nickname to identify the server
     
     Returns
     -------
@@ -153,10 +258,11 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
             If there is an error encoding or decoding the config file
         
         IOError
-            If there is an error reading or writing the config file from/to disk.
+            If there is an error reading or writing the config file from/to disk
     """
-    if servers == None:
-        servers = []
+    global _servers
+    if _servers == None:
+        _servers = []
 
     new = Server()
     new.Path = os.path.abspath(path)
@@ -165,14 +271,14 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
     if alias:
         alias = alias.strip()
 
-    if servers is not None and len(servers) > 0:
-        for srv in servers:
+    if _servers is not None and len(_servers) > 0:
+        for srv in _servers:
             if (srv.Path == new.Path):
                 return False
             if (srv.Alias == new.Alias and srv.Alias):
                 return False
 
-    servers.append(new)
+    _servers.append(new)
 
     try:
         # Read in current config
@@ -200,7 +306,7 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
         # Write entry to server_reigstry in config
         with open(config.get_config_location(), 'w') as data_file:
             try:
-                data['server_registry'] = servers
+                data['server_registry'] = _servers
                 encoded = jsonpickle.encode(data)
                 data_file.write(encoded)
             except json.JSONEncodeError as ex:
@@ -208,15 +314,29 @@ def register_server(servers, path: str, srv_type: ServerType, alias: str = None)
                 raise
 
         # success
-        print('Registered', srv_type, 'server at', path)
+        # print('Registered', srv_type, 'server at', path)
         return True
 
-    except json.JSONDecodeError as ex:
-        print("Error writing servers to disk", ex)
+    except json.JSONDecodeError:
+        print("Error writing servers to disk")
         raise
 
-# returns a server's type given the path to the server directory
 def determine_server_type(srv_dir: str):
+    """
+    Examines the files in a given server directory to determine its type.
+    Currently the search works primarily on key file names. For example,
+    Spigot and Forge both include their names in the jar filenames.
+
+    Parameters
+    ----------
+        srv_dir: str
+            Path to server directory to be examined.
+
+    Returns
+    -------
+        ServerType
+            Type of Minecraft server this was determined to be
+    """
     srv_dir = os.path.abspath(srv_dir)
     for dir_path, dir_names, f_names in os.walk(srv_dir):
         # don't enter subdirectories
@@ -241,11 +361,11 @@ def determine_server_type(srv_dir: str):
                     strat_jar =  ServerType.FORGE
                 elif 'paper' in file:
                     strat_jar = ServerType.PAPER
-                else:
-                    strat_jar = ServerType.VANILLA
+                #else:
+                #    strat_jar = ServerType.VANILLA
             
             # strat 2 - yml files
-            if file.endswith('.yml') or file.endswith('yaml'):
+            if file.endswith('.yml') or file.endswith('.yaml'):
                 if 'spigot' in file:
                     strat_yml =  ServerType.SPIGOT
                 elif 'forge' in file:
