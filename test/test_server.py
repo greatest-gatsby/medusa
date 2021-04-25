@@ -18,6 +18,7 @@ class ServerTestCase(TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        medusa.server._servers = []
 
     # Verifies that the `server` command invokes the server CLI parser
     @unittest.mock.patch('medusa.server.get_servers_from_config', return_value=[])
@@ -95,4 +96,51 @@ class ServerTestCase(TestCase):
         medusa.server.get_servers()
 
         mock_config_reader.assert_called_once()
-        pass
+
+    # Verifies that `register_server` writes new servers to disk
+    @unittest.mock.patch('builtins.print')
+    def test_server_register_writesConfigToDisk(self, mock_print):
+        file = jsonpickle.decode(medusa.filebases.DATA)
+        self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
+        self.fs.create_dir('/false/path')
+
+        assert medusa.server.register_server('/false/path', medusa.server.ServerType.SPIGOT, 'Unbelievable')
+
+        with open(medusa.config.get_config_location(), 'r') as conf:
+            conf_obj = json.load(conf)
+            assert conf_obj['server_registry'][0]['Alias'] == 'Unbelievable'
+        
+        assert len(medusa.server._servers) == 1
+        assert medusa.server._servers[0].Alias == 'Unbelievable'
+
+    # Verifies that `register_server` writes the `.medusa` file
+    def test_server_register_writesDotMedusa(self):
+        path = os.path.join('/inventive/trail', '.medusa')
+        self.fs.create_dir('/inventive/trail')
+        file = jsonpickle.decode(medusa.filebases.DATA)
+        self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
+
+        assert not os.path.exists(path)
+
+        assert medusa.server.register_server('/inventive/trail', medusa.server.ServerType.SPIGOT, 'Monsieur Increible')
+
+        with open(path, 'r') as dotmed:
+            med_json = json.load(dotmed)
+            assert med_json['metadata']['alias'] == 'Monsieur Increible'
+
+    # Verifies that `register_server` returns False when
+    # attempting to register the same server twice
+    def test_server_register_falseOnDuplicate(self):
+        self.fs.create_dir('/inventive/trail')
+        existing_server = medusa.server.Server()
+        existing_server.Alias = 'Yo bobby run it'
+        existing_server.Path = '/inventive/trail'
+        existing_server.Type = medusa.server.ServerType.VANILLA
+        
+        file = jsonpickle.decode(medusa.filebases.DATA)
+        file['server_registry'] = [existing_server]
+        self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
+        medusa.server._servers = medusa.server.get_servers_from_config()
+
+        assert not medusa.server.register_server('/inventive/trail', medusa.server.ServerType.VANILLA, 'Yo bobby run it')
+

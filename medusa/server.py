@@ -206,6 +206,7 @@ def register_server(path: str, srv_type: ServerType, alias: str = None):
         IOError
             If there is an error reading or writing the config file from/to disk
     """
+    global _servers
     if _servers == None:
         _servers = []
 
@@ -259,7 +260,7 @@ def register_server(path: str, srv_type: ServerType, alias: str = None):
                 raise
 
         # success
-        print('Registered', srv_type, 'server at', path)
+        # print('Registered', srv_type, 'server at', path)
         return True
 
     except json.JSONDecodeError:
