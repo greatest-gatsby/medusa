@@ -1,16 +1,5 @@
 import argparse
 
-# Medusa imports
-from . import config
-from . import server
-from . import status
-
-# TODO
-# add functions to get the main parser
-# change these add_ functions to return the created parser
-# each parser can be loaded by their respective user, i.e. medusa.config loads the config_parser
-# will no longer need the parser stuff in __main__.py
-
 # top-level parser
 parser = argparse.ArgumentParser(description='Manage multiple Spigot Minecraft servers')
 subparsers = parser.add_subparsers(help='Available commands', dest='command',

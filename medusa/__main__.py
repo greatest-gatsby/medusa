@@ -8,7 +8,8 @@ import inspect
 import medusa.config
 import medusa.parsers
 import medusa.run
-import medusa.server
+import medusa.servers
+import medusa.servers.manager
 
 # init submodules
 # servers = server.get_servers_from_config()
@@ -27,12 +28,10 @@ if __name__ == '__main__':
         args = sys.argv[2:]
     
     if (cmd == 'config'):
-        config.process_config(args)
-    elif (cmd == 'status'):
-        status.process_status(args)
+        medusa.config.process_config(args)
     elif (cmd == 'server'):
-        server.process_server(args)
+        medusa.servers.manager.process_server(args)
     elif (cmd == 'run'):
-        run.process_run(args)
+        medusa.run.process_run(args)
     else:
         print("HELP HERE")
