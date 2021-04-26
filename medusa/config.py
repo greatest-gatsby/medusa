@@ -35,7 +35,7 @@ def process_config(args):
     elif (cmd.action == 'set'):
         set_config_value(cmd.property, cmd.value)
     elif (cmd.action == 'init'):
-        init_config(args.path)
+        init_config(cmd.path)
     elif (cmd.action == 'where'):
         print(get_config_location())
     else:
