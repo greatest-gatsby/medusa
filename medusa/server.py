@@ -190,6 +190,17 @@ def get_servers():
     
     return _servers
 
+def get_server_by_identifier(identifier: str):
+    """
+    Finds the server that can be identified by the given string. If no such server
+    is found, then `None` is returned.
+    """
+    for srv in get_servers():
+        if srv.is_identifiable_by(identifier):
+            return srv
+    
+    return None
+
 # Create a new server
 def create_server(path, type = None, alias = None):
     pass
