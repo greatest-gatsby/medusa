@@ -121,7 +121,7 @@ def scan_directory_for_servers(scan_path: str = ""):
                 continue
             
             # record any successes
-            regSuccess, _servers = register_server(dir.path ,dir_type)
+            regSuccess = register_server(dir.path ,dir_type)
             if regSuccess:
                 new_count += 1
 
