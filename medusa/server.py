@@ -121,7 +121,7 @@ def scan_directory_for_servers(scan_path: str = ""):
                 continue
             
             # record any successes
-            regSuccess, _servers = register_server(dir.path ,dir_type)
+            regSuccess = register_server(dir.path ,dir_type)
             if regSuccess:
                 new_count += 1
 
@@ -189,6 +189,17 @@ def get_servers():
         _servers = get_servers_from_config()
     
     return _servers
+
+def get_server_by_identifier(identifier: str):
+    """
+    Finds the server that can be identified by the given string. If no such server
+    is found, then `None` is returned.
+    """
+    for srv in get_servers():
+        if srv.is_identifiable_by(identifier):
+            return srv
+    
+    return None
 
 # Create a new server
 def create_server(path, type = None, alias = None):

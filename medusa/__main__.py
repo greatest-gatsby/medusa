@@ -5,10 +5,10 @@ import sys
 import inspect
 
 # Medusa imports
-from . import config
-from . import parsers
-from . import server
-from . import status
+import medusa.config
+import medusa.parsers
+import medusa.run
+import medusa.server
 
 # init submodules
 # servers = server.get_servers_from_config()
@@ -24,10 +24,7 @@ if __name__ == '__main__':
         cmd = ""
     else:
         cmd = sys.argv[1]
-        #print(sys.argv)
         args = sys.argv[2:]
-        #print(sys.argv)
-    
     
     if (cmd == 'config'):
         config.process_config(args)
@@ -35,5 +32,7 @@ if __name__ == '__main__':
         status.process_status(args)
     elif (cmd == 'server'):
         server.process_server(args)
+    elif (cmd == 'run'):
+        run.process_run(args)
     else:
         print("HELP HERE")
