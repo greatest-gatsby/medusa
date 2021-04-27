@@ -79,3 +79,10 @@ class ParsersTestCase(TestCase):
         args_parsed = parser.parse_args(args)
         assert args_parsed.action == 'where'
 
+    def test_parser_verbosity(self):
+        args = ['where', '-vvvv', '--verbose']
+        parser = medusa.parsers.get_config_parsers()
+        
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.verbose == 5
+
