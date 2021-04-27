@@ -8,45 +8,14 @@ import argparse
 
 import jsonpickle
 
-from . import config
-from . import filebases
-from . import parsers
+from .. import config
+from .. import filebases
+from .. import parsers
+from .models import Server
+from .models import ServerType
 
 serv_subparser = None
 _servers = []
-
-class ServerType(Enum):
-    NOTASERVER = 0
-    VANILLA = 1
-    FORGE = 2
-    SPIGOT = 4
-    PAPER = 8
-
-class Server:
-    Path: str
-    Alias: str
-    Type: ServerType
-
-    def __str__(self):
-        return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
-
-    def __eq__(self, other):
-        return self.is_identifiable_by(other)
-
-    def is_identifiable_by(this, identifier: str):
-        """
-        Determines whether the given string is a valid identifier for this server.
-        Works by matching Alias then Path, in that order.
-
-        Returns
-        ------
-            boolean
-                `True` if the given string identifies this server, else `False`.
-        """
-        if this.Alias == identifier or this.Path == identifier:
-            return True
-        
-        return False
 
 def process_server(args):
     """
@@ -59,6 +28,7 @@ def process_server(args):
         args : List of str
             Command-line arguments from and including the `server` command.
     """
+    global _servers
     parser = parsers.get_server_parsers()
     args = parser.parse_args(args)
     _servers = get_servers_from_config()
@@ -92,6 +62,7 @@ def scan_directory_for_servers(scan_path: str = ""):
             The number of new Servers that were registered with Medusa.
             Returns zero if no new servers were registered during the scan.
     """
+    global _servers
     if (scan_path == ""):
         data_dir = config.get_config_value('server_directory')
     
