@@ -44,6 +44,11 @@ def get_server_parsers():
     server_scan_parser.add_argument('-p', '--path', help='Path to directory to be scanned')
 
     return server_parser
+
+def get_run_parsers():
+    run_parser = subparsers.add_parser('run', parents = [arg_identifier, arg_verbose])
+    run_parser.add_argument('command', nargs='+')
+    return run_parser
     
 def add_status_parsers(main_parser, main_subparser):
     status_parser = main_subparser.add_parser('status')
