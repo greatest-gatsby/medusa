@@ -2,6 +2,7 @@ from enum import Enum
 import io
 import json
 import os
+import pathlib
 from pprint import pprint
 from prettytable import PrettyTable
 import argparse
@@ -365,3 +366,35 @@ def determine_server_type(srv_dir: str):
                 return strat_yml
             else:
                 return strat_jar
+
+                
+def find_startup_script_paths(path: str):
+    """
+    Finds the startup scripts, if any, for this Server.
+
+    Returns
+    -------
+        paths: List of str
+            The path to the scripts, or an empty list
+            if no such script was found. The paths are
+            relative to the root of the server directory.
+
+    Parameters
+    ----------
+        path: str
+            Path to the directory which may contain top-level
+            startup scripts.
+    """
+    path = pathlib.Path(path)
+    found = []
+    target_ext = ['.bat', '.sh']
+
+    with os.scandir(path) as scan:
+        for file in scan:
+            if not file.is_file():
+                continue
+            for ext in target_ext:
+                if file.name.endswith(ext) and 'start' in file.name:
+                    found.append(file.name)
+    
+    return found

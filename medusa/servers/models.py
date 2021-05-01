@@ -49,7 +49,6 @@ class ServerController(abc.ABC):
         print('Starting abstract')
         pass
 
-    @classmethod
     @abc.abstractmethod
     def shutdown(cls):
         pass

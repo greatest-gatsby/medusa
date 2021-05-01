@@ -19,32 +19,4 @@ class ServerControllerTests(TestCase):
         self.srv.Type = ServerType.FORGE
         self.control = ForgeController(self.srv)
 
-    def test_startupScriptFinder_getsSingle(self):
-        self.fs.create_file(join(self.VIR_PATH,'bait.bat'))
-        self.fs.create_file(join(self.VIR_PATH,'run.bat'))
-        self.fs.create_file(join(self.VIR_PATH,'run.sh'))
-        self.fs.create_file(join(self.VIR_PATH,'serverstart.bat'))
-
-        
-        paths = self.control.find_startup_script_paths()
-        assert len(paths) == 1
-        assert paths[0] == 'serverstart.bat'
-
-    def test_startupScriptFinder_getsMany(self):
-        self.fs.create_file(join(self.VIR_PATH,'bait.bat'))
-        self.fs.create_file(join(self.VIR_PATH,'startup.sh'))
-        self.fs.create_file(join(self.VIR_PATH,'run.sh'))
-        self.fs.create_file(join(self.VIR_PATH,'serverstart.bat'))
-        
-        paths = self.control.find_startup_script_paths()
-
-        assert len(paths) == 2
-        assert 'startup.sh' in paths
-        assert 'serverstart.bat' in paths
     
-    def test_startupScriptFinder_getsNone(self):
-        self.fs.create_file(join(self.VIR_PATH, 'no.txt'))
-
-        paths = self.control.find_startup_script_paths()
-
-        assert len(paths) == 0
