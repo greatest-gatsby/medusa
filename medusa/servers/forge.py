@@ -1,9 +1,9 @@
 import argparse
 
 from .models import ServerController, ServerType, Server
+from .. import parsers
 
-from ..parsers import parser
-from ..parsers import subparsers
+
 
 class ForgeController(ServerController):
     """
@@ -28,7 +28,5 @@ class ForgeController(ServerController):
 
     @classmethod
     def get_parser(cls):
-        run_parser = subparsers.add_parser('run')
-        run_parser.add_argument('identifier', help='Alias or path of the server')
-        run_parser.add_argument('command', nargs='+')
-        return parser
+        run_parser = super().get_parser(cls)
+        return run_parser

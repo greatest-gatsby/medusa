@@ -3,6 +3,8 @@ from enum import Enum
 import os
 import pathlib
 
+from .. import parsers
+
 class ServerType(Enum):
     NOTASERVER = 0
     VANILLA = 1
@@ -42,7 +44,16 @@ class ServerController(abc.ABC):
     
     @abc.abstractmethod
     def get_parser(cls):
-        pass
+        run_parser = parsers.get_run_parsers()
+        run_subs = run_parser.add_subparsers(dest='action')
+
+        passthru_parser = run_subs.add_parser('pass', help='Passes the given command to the Minecraft server directly')
+        passthru_parser.add_argument('command', help='Command to execute in server console')
+        start_parser = run_subs.add_parser('start')
+        stop_parser = run_subs.add_parser('stop')
+        restart_parser = run_subs.add_parser('restart')
+        
+        return run_parser
 
     @abc.abstractmethod
     def startup(cls):

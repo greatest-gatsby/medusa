@@ -47,7 +47,7 @@ def get_server_parsers():
 
 def get_run_parsers():
     run_parser = subparsers.add_parser('run', parents = [arg_identifier, arg_verbose])
-    run_parser.add_argument('command', nargs='+')
+    run_parser.add_argument('identifier', help='Alias or path of the server')
     return run_parser
     
 def add_status_parsers(main_parser, main_subparser):
