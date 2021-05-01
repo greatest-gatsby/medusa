@@ -37,12 +37,10 @@ class Server:
 
 class ServerController(abc.ABC):
     
-    @classmethod
     @abc.abstractmethod
     def get_parser(cls):
         pass
 
-    @classmethod
     @abc.abstractmethod
     def startup(cls):
         print('Starting abstract')

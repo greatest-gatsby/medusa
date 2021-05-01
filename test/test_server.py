@@ -57,7 +57,7 @@ class ServerTestCase(TestCase):
     @unittest.mock.patch('medusa.servers.manager._servers')
     @unittest.mock.patch('builtins.print')
     def test_server_list_accessesFields(self, mock_print, mock_servers, mock_config_get):
-        srv1 = medusa.servers.Server()
+        srv1 = medusa.servers.manager.Server()
         srv1.Alias = 'Friendly'
         srv1.Path = '/srv/friends forever/s1'
         srv1.Type = medusa.servers.manager.ServerType.PAPER
@@ -81,7 +81,7 @@ class ServerTestCase(TestCase):
     
     # Verifies that getFromConfig reads from the 'server_registry' config block
     def test_server_getFromConfig_readsConfig(self):
-        test_data = medusa.servers.Server()
+        test_data = medusa.servers.manager.Server()
         test_data.Alias = 'Advanced Cosmonaut'
         test_data.Path = 'Farout Dir/'
         test_data.Type = medusa.servers.manager.ServerType.FORGE
@@ -143,7 +143,7 @@ class ServerTestCase(TestCase):
     # attempting to register the same server twice
     def test_server_register_falseOnDuplicate(self):
         self.fs.create_dir('/inventive/trail')
-        existing_server = medusa.servers.Server()
+        existing_server = medusa.servers.manager.Server()
         existing_server.Alias = 'Yo bobby run it'
         existing_server.Path = '/inventive/trail'
         existing_server.Type = medusa.servers.manager.ServerType.VANILLA
@@ -163,7 +163,7 @@ class ServerTestCase(TestCase):
     # Verifies that `deregister_server` raises an error if
     # the given identifier matches no known servers
     def test_server_deregister_throwsIfNoneFound(self):
-        srv = medusa.servers.Server()
+        srv = medusa.servers.manager.Server()
         # Patch the function because we aren't trying to test `is_identifiable_by`,
         # only that its return value is used properly
         with unittest.mock.patch.object(srv, 'is_identifiable_by', return_value=False) as patched:
