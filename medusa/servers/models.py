@@ -5,17 +5,31 @@ import pathlib
 
 from .. import parsers
 
-class ServerType(Enum):
-    NOTASERVER = 0
-    VANILLA = 1
-    FORGE = 2
-    SPIGOT = 4
-    PAPER = 8
+class ServerType():
+    NOTASERVER = 'NOTASERVER'
+    VANILLA = 'VANILLA'
+    FORGE = 'FORGE'
+    SPIGOT = 'SPIGOT'
+    PAPER = 'PAPER'
 
 class Server:
+    """
+    Represents a Minecraft server and its general information.
+    Any type-specific info (e.g. Forgeloader version) requires a
+    corresponding Controller.
+    """
+    
     Path: str
+    """Path to the server"""
+    
     Alias: str
+    """Human-friendly name for the server"""
+
     Type: ServerType
+    """Type of the server"""
+
+    StartupScriptPath: str
+    """Path to the startup script"""
 
     def __str__(self):
         return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
