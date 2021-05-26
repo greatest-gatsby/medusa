@@ -42,6 +42,20 @@ def process_server(args):
         list_servers()
     elif (args.action == 'scan'):
         scan_directory_for_servers("")
+    elif (args.action == 'set'):
+        srv = get_server_by_identifier(args.identifier)
+        if (srv is None):
+            print('No server "{}"'.format(args.identifier))
+            return
+        
+        if (args.property == 'alias'):
+            srv.Alias = args.value
+        elif (args.property == 'path'):
+            srv.Path = args.value
+        elif (args.property == 'type'):
+            srv.Type = args.value
+        
+        update_server(args.identifier, srv)
     else:
         parser.print_help()
 
@@ -215,7 +229,40 @@ def deregister_server(identifier: str):
         conf.write(jsonpickle.encode(conf_json))
         conf.truncate()
 
-    
+def update_server(old_id: str, updated: Server):
+    """
+    Update a server registered with Medusa given its last-known identifier
+    and updated Server object to insert.
+
+    Parameters
+    ---------
+        old_id: str
+            Identifier for the Server to be updated. This doesn't need to identify
+            the new `updated` object, just the current entry that needs to be updated.
+        
+        updated: Server
+            Updated Server object to store in Medusa.
+    """
+    target = get_server_by_identifier(old_id)
+    if target is None:
+        raise KeyError('No server', old_id)
+
+    # Update servers in memory
+    _servers.remove(target)
+    _servers.append(updated)
+
+    # Read in current config
+    with open(config.get_config_location(), 'w+') as data_file:
+        try:
+            data = jsonpickle.decode(data_file.read())
+            data['server_registry'] = _servers
+            data_file.seek(0)
+            data_file.write(jsonpickle.encode(data))
+        except json.JSONDecodeError as ex:
+            print('Error reading servers file while registering new server')
+            raise
+
+    pass
 
 def register_server(path: str, srv_type: ServerType, alias: str = None):
     """
@@ -367,7 +414,7 @@ def determine_server_type(srv_dir: str):
             else:
                 return strat_jar
 
-                
+
 def find_startup_script_paths(path: str):
     """
     Finds the startup scripts, if any, for this Server.

@@ -39,9 +39,14 @@ def get_server_parsers():
         choices=['vanilla', 'forge', 'spigot', 'paper'])
 
     server_remove_parser = server_subparsers.add_parser('remove', parents=[arg_identifier, arg_verbose])
-    server_list_parser = server_subparsers.add_parser('list')
-    server_scan_parser = server_subparsers.add_parser('scan')
+    server_list_parser = server_subparsers.add_parser('list', parents=[arg_verbose])
+    
+    server_scan_parser = server_subparsers.add_parser('scan', parents=[arg_verbose])
     server_scan_parser.add_argument('-p', '--path', help='Path to directory to be scanned')
+
+    server_alias_parser = server_subparsers.add_parser('set', parents=[arg_identifier, arg_verbose])
+    server_alias_parser.add_argument('property', choices=['alias','path', 'type'])
+    server_alias_parser.add_argument('value')
 
     return server_parser
 
