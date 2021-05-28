@@ -48,6 +48,33 @@ class ParsersTestCase(TestCase):
         args_parsed = parser.parse_args(args)
         assert args_parsed.action == 'scan'
 
+    def test_parser_server_setAlias(self):
+        args = ['set', 'server id', 'alias', 'nickname']
+        parser = medusa.parsers.get_server_parsers()
+
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.property == 'alias'
+        assert args_parsed.identifier == 'server id'
+        assert args_parsed.value == 'nickname'
+
+    def test_parser_server_setPath(self):
+        args = ['set', 'server id', 'path', '/new/amazing/path']
+        parser = medusa.parsers.get_server_parsers()
+
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.property == 'path'
+        assert args_parsed.identifier == 'server id'
+        assert args_parsed.value == '/new/amazing/path'
+
+    def test_parser_server_setType(self):
+        args = ['set', 'server id', 'type', 'Paper']
+        parser = medusa.parsers.get_server_parsers()
+
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.property == 'type'
+        assert args_parsed.identifier == 'server id'
+        assert args_parsed.value == 'Paper'
+
     def test_parser_config_get(self):
         args = ['get', 'test-key']
         parser = medusa.parsers.get_config_parsers()
@@ -78,4 +105,11 @@ class ParsersTestCase(TestCase):
 
         args_parsed = parser.parse_args(args)
         assert args_parsed.action == 'where'
+
+    def test_parser_verbosity(self):
+        args = ['where', '-vvvv', '--verbose']
+        parser = medusa.parsers.get_config_parsers()
+        
+        args_parsed = parser.parse_args(args)
+        assert args_parsed.verbose == 5
 
