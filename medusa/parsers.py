@@ -44,15 +44,17 @@ def get_server_parsers():
     server_scan_parser = server_subparsers.add_parser('scan', parents=[arg_verbose])
     server_scan_parser.add_argument('-p', '--path', help='Path to directory to be scanned')
 
-    server_alias_parser = server_subparsers.add_parser('set', parents=[arg_identifier, arg_verbose])
-    server_alias_parser.add_argument('property', choices=['alias','path', 'type'])
-    server_alias_parser.add_argument('value')
+    server_set_parser = server_subparsers.add_parser('set', parents=[arg_identifier, arg_verbose])
+    server_set_parser.add_argument('property', choices=['alias','path', 'type'])
+    server_set_parser.add_argument('value')
+
+    server_alias_parser = server_subparsers.add_parser('alias', parents=[arg_identifier,arg_verbose])
+    server_alias_parser.add_argument('new_alias', help='Leave empty to remove alias')
 
     return server_parser
 
 def get_run_parsers():
     run_parser = subparsers.add_parser('run', parents = [arg_identifier, arg_verbose])
-    run_parser.add_argument('identifier', help='Alias or path of the server')
     return run_parser
     
 def add_status_parsers(main_parser, main_subparser):
@@ -64,3 +66,6 @@ def add_user_parsers(main_parser, main_subparser):
     user_parser = main_subparser.add_parser('user')
     user_subparsers = user_parser.add_subparsers(help='Manage Users', dest='user', description='Manage users')
     user_list_parser = user_subparsers.add_parser('list')
+
+def print_help():
+    parser.print_help()

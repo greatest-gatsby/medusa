@@ -5,7 +5,7 @@ import pathlib
 
 from .. import parsers
 
-class ServerType():
+class ServerType(object):
     NOTASERVER = 'NOTASERVER'
     VANILLA = 'VANILLA'
     FORGE = 'FORGE'

@@ -13,9 +13,31 @@ class ForgeParserTests(TestCase):
     forge_srv.Type = models.ServerType.FORGE
     forge_control = forge.ForgeController(forge_srv)
 
-    def test_forge_run(self):
-        args = ['run', 'my glorious identifier']
+    def test_forge_run_start(self):
+        args = ['run', 'start']
         parser = self.forge_control.get_parser()
         proc = parser.parse_args(args)
 
-        assert proc.identifier == 'my glorious identifier'
+        assert proc.action == 'start'
+    
+    def test_forge_run_pass(self):
+        args = ['run', 'pass', 'op TheDude']
+        parser = self.forge_control.get_parser()
+        proc = parser.parse_args(args)
+
+        assert proc.action == 'pass'
+        assert proc.command == 'op TheDude'
+        
+    def test_forge_run_stop(self):
+        args = ['run', 'stop']
+        parser = self.forge_control.get_parser()
+        proc = parser.parse_args(args)
+        
+        assert proc.action == 'stop'
+        
+    def test_forge_run_restart(self):
+        args = ['run', 'restart']
+        parser = self.forge_control.get_parser()
+        proc = parser.parse_args(args)
+        
+        assert proc.action == 'restart'

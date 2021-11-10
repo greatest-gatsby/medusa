@@ -21,7 +21,7 @@ class ServerControllerTests(TestCase):
         self.control = ForgeController(self.srv)
 
     def test_parser_passthru(self):
-        args = ['run','my-identifier', 'pass', 'op TargetPlayer']
+        args = ['my-identifier', 'pass', 'op TargetPlayer']
         parsed = self.control.get_parser().parse_args(args)
 
         assert parsed.identifier == 'my-identifier'
@@ -29,21 +29,21 @@ class ServerControllerTests(TestCase):
         assert parsed.command == 'op TargetPlayer'
 
     def test_parser_start(self):
-        args = ['run', 'de ayedee', 'start']
+        args = ['de ayedee', 'start']
         parsed = self.control.get_parser().parse_args(args)
 
         assert parsed.identifier == 'de ayedee'
         assert parsed.action == 'start'
 
     def test_parser_stop(self):
-        args = ['run', 'wheres waldo', 'stop']
+        args = ['wheres waldo', 'stop']
         parsed = self.control.get_parser().parse_args(args)
 
         assert parsed.identifier == 'wheres waldo'
         assert parsed.action == 'stop'
 
     def test_parser_restart(self):
-        args = ['run', 'look at my head', 'restart']
+        args = ['look at my head', 'restart']
         parsed = self.control.get_parser().parse_args(args)
 
         assert parsed.identifier == 'look at my head'
