@@ -21,10 +21,9 @@ class ForgeController(ServerController):
 
     def startup(cls):
         print('Starting Forge server')
-        pass
 
     def shutdown(cls):
-        pass
+        print('Shutting down Forge server')
 
     @classmethod
     def get_parser(cls):

@@ -1,7 +1,10 @@
 # Medusa
 ## A Python program for managing multiple Minecraft servers
 
-Medusa provides tools capable of managing multiple Minecraft servers, ranging from linking whitelist files updating Spigot and plugin installations.  
+Medusa provides tools capable of managing multiple Minecraft servers, ranging from linking whitelist files updating Spigot and plugin installations.
+
+## Overview
+Medusa runs on the same machine hosting the Minecraft servers. This allows it to work with the filesystem to manage server files and to start up the game servers. Once the servers are running, Medusa communicates with them over RCON.
 
 ## Installing
 

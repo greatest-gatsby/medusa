@@ -56,6 +56,18 @@ def process_server(args):
             srv.Type = args.value
         
         update_server(args.identifier, srv)
+    elif (args.action == 'alias'):
+        srv = get_server_by_identifier(args.identifier)
+        if (srv is None):
+            print('No server "{}"'.format(args.identifier))
+            return
+        
+        if (args.new_alias == '' or args.new_alias is None):
+            srv.Alias = None
+        else:
+            srv.Alias = args.new_alias
+        update_server(srv.Path, srv)
+
     else:
         parser.print_help()
 

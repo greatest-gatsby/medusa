@@ -113,7 +113,7 @@ def set_config_value(key, value):
         print('No key named', key)
     
 
-def init_config(verbosity: int = 0):
+def init_config(verbosity = None):
     """
     Writes a plain config to disk, prompting if the operation
     would overwrite existing data.
@@ -121,8 +121,8 @@ def init_config(verbosity: int = 0):
     if (os.path.exists(get_config_location())):
         print('Initializing a new config will overwrite the one at',get_config_location())
         res = input('Are you SURE you want to OVERWRITE this file? [y/N]: ')
-        if res.trim().lower() != 'y':
-            if (verbosity > 0):
+        if res.strip().lower() != 'y':
+            if (verbosity is not None):
                 print('Config init aborted.')
             return False
     # create directory if not exists

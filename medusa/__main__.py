@@ -34,4 +34,4 @@ if __name__ == '__main__':
     elif (cmd == 'run'):
         medusa.run.process_run(args)
     else:
-        print("HELP HERE")
+        medusa.parsers.print_help()

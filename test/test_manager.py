@@ -39,3 +39,7 @@ class ManagerTests(TestCase):
         paths = manager.find_startup_script_paths(self.VIR_PATH)
 
         assert len(paths) == 0
+
+    def test_updateServer_raisesIfInvalidIdentifier(self):
+        
+        pass
