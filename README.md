@@ -1,6 +1,10 @@
 # Medusa
 ## A Python program for managing multiple Minecraft servers
 
+[![pipeline status](https://git.therode.net/jrode/medusa/badges/main/pipeline.svg)](https://git.therode.net/jrode/medusa/-/commits/main)
+
+[![coverage report](https://git.therode.net/jrode/medusa/badges/main/coverage.svg)](https://git.therode.net/jrode/medusa/-/commits/main)
+
 Medusa provides tools capable of managing multiple Minecraft servers, ranging from linking whitelist files updating Spigot and plugin installations.
 
 ## Overview
