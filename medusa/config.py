@@ -3,8 +3,6 @@ import json
 from json import JSONDecodeError
 import os
 
-import appdirs
-
 from . import filebases
 from . import parsers
 

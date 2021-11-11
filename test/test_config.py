@@ -192,7 +192,8 @@ class ConfigTestCase(TestCase):
         self.assertFalse(self.fs.isdir(medusa.config.get_config_location()))
         medusa.config.init_config()
         self.assertTrue(self.fs.isdir('/brandnew/directory/'))
-        mock_print.assert_called_once_with('Created new Medusa config at', '\\brandnew\\directory\\medusa.json')
+        sep = self.fs.path_separator
+        mock_print.assert_called_once_with('Created new Medusa config at', f'{sep}brandnew{sep}directory{sep}medusa.json')
 
 if __name__ == '__main__':
     unittest.main()
