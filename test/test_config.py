@@ -1,7 +1,11 @@
+from argparse import ArgumentError
+import builtins
+from typing import Type
 from pyfakefs.fake_filesystem_unittest import TestCase
 from pyfakefs import fake_filesystem
 
 import json
+from json import JSONDecodeError
 import unittest
 import unittest.mock
 from unittest.mock import Mock, MagicMock, patch
@@ -99,6 +103,96 @@ class ConfigTestCase(TestCase):
             medusa.config.set_config_value('server_directory','new test value')
             mock_print.assert_called_with('Config not found at', medusa.config.get_config_location())
 
+    # Verifies that argparse prints an error if command is "get" but is given no config key
+    @unittest.mock.patch('sys.stderr')
+    def test_config_process_getConfigKey_printErrorIfNoKey(self, mock_err):
+        args = ['get']
+        with self.assertRaises(SystemExit):
+            medusa.config.process_config(args)
+        
+    # Verifies that an error is printed if command is "get" but is given an empty config key
+    @unittest.mock.patch('sys.stderr')
+    @unittest.mock.patch('builtins.print')
+    def test_config_process_getConfigKey_printErrorIfEmptyKey(self, mock_print, mock_err):
+        args = ['get', '']
+        medusa.config.process_config(args)
+        mock_print.assert_called_once_with('No key named', '')
+    
+    # Verifies that an error is printed if the given key is not found in the config  
+    @unittest.mock.patch('builtins.print')
+    def test_config_process_getConfigKey_noMatchingKey(self, mock_print):
+        key_name = 'fake key'
+        args = ['get', key_name]
+        medusa.config.get_config_value = MagicMock(return_value=None)
+        medusa.config.process_config(args)
+        mock_print.assert_called_once_with('No key named',key_name)
+       
+    # Verifies that `config init` invokes the config initialization method
+    def test_config_process_init_invokesInitConfig(self):
+        args = ['init']
+        medusa.config.init_config = MagicMock()
+        medusa.config.process_config(args)
+        medusa.config.init_config.assert_called_once_with(None)
+    
+    # Verifies that `config where` prints the config location
+    @unittest.mock.patch('builtins.print')
+    def test_config_process_where_printsConfigLocation(self, mock_print):
+        args = ['where']
+        planted_path = '/bridge/to/terabythea'
+        medusa.config.get_config_location = MagicMock(return_value = planted_path)
+        medusa.config.process_config(args)
+        medusa.config.get_config_location.assert_called_once()
+        mock_print.assert_called_once_with(planted_path)
+    
+    @unittest.mock.patch('builtins.print')
+    def test_config_setConfigValue_exitsIfConfigEmpty(self, mock_print):
+        self.fs.create_file(medusa.config.get_config_location())
+        with self.assertRaises(SystemExit):
+            medusa.config.set_config_value('key', 'value')
+        mock_print.assert_called_once_with('Config file empty -- generate a new one with `medusa config init`')
+      
+    @unittest.mock.patch('builtins.print')  
+    def test_config_setConfigValue_printsJsonDecodeError(self, mock_print):
+        self.fs.create_file(medusa.config.get_config_location(), contents='"property":"unclosed')
+        with self.assertRaises(JSONDecodeError) as jer:
+            medusa.config.set_config_value('key', 'value')
+            mock_print.assert_called_with(jer)
+            mock_print.assert_called_with('Error opening config for write -- file is malformed or corrupt')
+            
+    @unittest.mock.patch('json.load')
+    @unittest.mock.patch('builtins.print')
+    def test_config_setConfigValue_rethrowsMiscError(self, mock_print, mock_json):
+        self.fs.create_file(medusa.config.get_config_location())
+        json.load = MagicMock(side_effect=IOError())
+        with self.assertRaises(IOError):
+            medusa.config.set_config_value('key', 'value')
+        mock_print.assert_called_once_with('Unknown error opening config for write')
+     
+    @unittest.mock.patch('json.dump')
+    @unittest.mock.patch('builtins.print')   
+    def test_config_setConfigValue_printsAndExits(self, mock_print, mock_json):
+        self.fs.create_file(medusa.config.get_config_location(), contents='{"key":"oldvalue"}')
+        json.dump = MagicMock(side_effect=TypeError())
+        with self.assertRaises(TypeError):
+            medusa.config.set_config_value('key', 'value')
+        mock_print.assert_called_once_with('Error writing updated config to disk')
+    
+    @unittest.mock.patch('builtins.input', return_value = 'r')
+    @unittest.mock.patch('builtins.print')
+    def test_config_init_promptsForOverwrite(self, mock_print, mock_input):
+        self.fs.create_file(medusa.config.get_config_location(), contents='{"key":"oldvalue"}')
+        result = medusa.config.init_config(verbosity=1)
+        mock_print.assert_called_with('Config init aborted.')
+        mock_input.assert_called_once_with('Are you SURE you want to OVERWRITE this file? [y/N]: ')
+        self.assertFalse(result)
+    
+    @unittest.mock.patch('builtins.print')
+    @unittest.mock.patch('medusa.config.get_config_location', return_value='/brandnew/directory/medusa.json')
+    def test_config_init_createsDirectoryIfNotExists(self, mock_conf_location, mock_print):
+        self.assertFalse(self.fs.isdir(medusa.config.get_config_location()))
+        medusa.config.init_config()
+        self.assertTrue(self.fs.isdir('/brandnew/directory/'))
+        mock_print.assert_called_once_with('Created new Medusa config at', '\\brandnew\\directory\\medusa.json')
 
 if __name__ == '__main__':
     unittest.main()
