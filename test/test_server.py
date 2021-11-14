@@ -1,4 +1,4 @@
-from pyfakefs.fake_filesystem_unittest import TestCase
+from pyfakefs.fake_filesystem_unittest import TestCase, patchfs
 from pyfakefs import fake_filesystem
 
 from prettytable import PrettyTable
@@ -19,6 +19,7 @@ class ServerTestCase(TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        self.fs.reset()
         medusa.servers.manager._servers = []
 
     def plant_server(self, servers):
@@ -75,9 +76,11 @@ class ServerTestCase(TestCase):
 
     # Verifies that the function to retrieve servers from saved entries
     # in the config file throws if the config file cannot be found.
-    def test_server_getFromConfig_throwsIfNoFile(self):
+    @unittest.mock.patch('medusa.config.get_config_location', return_value = 'rando-file-path')
+    def test_server_getFromConfig_throwsIfNoFile(self, mock_isfile):        
         with self.assertRaises(FileNotFoundError):
             medusa.servers.manager.get_servers_from_config()
+        medusa.config.get_config_location.assert_called()
     
     # Verifies that getFromConfig reads from the 'server_registry' config block
     def test_server_getFromConfig_readsConfig(self):
@@ -85,14 +88,11 @@ class ServerTestCase(TestCase):
         test_data.Alias = 'Advanced Cosmonaut'
         test_data.Path = 'Farout Dir/'
         test_data.Type = medusa.servers.manager.ServerType.FORGE
-        file = jsonpickle.decode(medusa.filebases.DATA)
-        file['server_registry'] = [test_data]
-
-        self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
+        self.plant_server([test_data])
 
         servers = medusa.servers.manager.get_servers_from_config()
-        assert len(servers) == 1
-        assert servers[0].Alias == 'Advanced Cosmonaut'
+        self.assertEqual(1, len(servers), 'Should have gotten exactly the 1 server we planted')
+        self.assertEqual('Advanced Cosmonaut', servers[0].Alias)
         assert servers[0].Path == 'Farout Dir/'
         assert servers[0].Type == medusa.servers.manager.ServerType.FORGE
 
@@ -166,28 +166,27 @@ class ServerTestCase(TestCase):
         srv = medusa.servers.manager.Server()
         # Patch the function because we aren't trying to test `is_identifiable_by`,
         # only that its return value is used properly
-        with unittest.mock.patch.object(srv, 'is_identifiable_by', return_value=False) as patched:
-            medusa.servers.manager._servers = [srv]
-            
-            with self.assertRaises(KeyError):
-                medusa.servers.manager.deregister_server('conflicting')
-            patched.assert_called_once()
+        srv.is_identifiable_by = unittest.mock.MagicMock(return_value=False)
+        medusa.servers.manager._servers = [srv]
+        
+        with self.assertRaises(KeyError):
+            medusa.servers.manager.deregister_server('conflicting')
+        srv.is_identifiable_by.assert_called_once()
 
     # Verifies that `deregister_server` writes its changed config to disk
     def test_server_deregister_writesConfig(self):
-        # Generate data
+        # Generate a server and plant it in the manager
         existing_server = medusa.servers.manager.Server()
         existing_server.Alias = 'delete me!'
         existing_server.Path = '/creative/venture'
         existing_server.Type = medusa.servers.manager.ServerType.FORGE
         self.plant_server([existing_server])
         
-        
-        with unittest.mock.patch.object(existing_server, 'is_identifiable_by', return_value=True) as patched:
-            medusa.servers.manager._servers = [existing_server]
-            medusa.servers.manager.deregister_server('delete me!')
-            # Call once in memory, call once on disk
-            assert patched.call_count == 2
+        existing_server.is_identifiable_by = unittest.mock.MagicMock(return_value=True)
+        medusa.servers.manager._servers = [existing_server]
+        medusa.servers.manager.deregister_server('delete me!')
+        # Call once in memory, call once on disk
+        assert existing_server.is_identifiable_by.call_count == 2
         
         with open(medusa.config.get_config_location(), 'r') as conf:
             txt = conf.read()
@@ -203,11 +202,11 @@ class ServerTestCase(TestCase):
         existing_server.Type = medusa.servers.manager.ServerType.FORGE
         self.plant_server([existing_server])
         
-        with unittest.mock.patch.object(existing_server, 'is_identifiable_by', return_value=True) as patched:
-            medusa.servers.manager._servers = [existing_server]
-            medusa.servers.manager.deregister_server('traaash')
-            # Call once in memory, call once on disk
-            assert patched.call_count == 2
+        existing_server.is_identifiable_by = unittest.mock.MagicMock(return_value=True)
+        medusa.servers.manager._servers = [existing_server]
+        medusa.servers.manager.deregister_server('traaash')
+        # Call once in memory, call once on disk
+        assert existing_server.is_identifiable_by.call_count == 2
 
         assert len(medusa.servers.manager._servers) == 0
 

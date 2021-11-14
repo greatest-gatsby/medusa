@@ -1,7 +1,10 @@
 from os.path import join
+import unittest
+from unittest.mock import MagicMock, patch
 from pyfakefs.fake_filesystem_unittest import TestCase
 
 from medusa.servers import manager
+from medusa.config import get_config_location
 
 class ManagerTests(TestCase):
     VIR_PATH = 'D:\\Minecraft\\Servers'
@@ -40,6 +43,11 @@ class ManagerTests(TestCase):
 
         assert len(paths) == 0
 
-    def test_updateServer_raisesIfInvalidIdentifier(self):
-        
+    @patch('medusa.servers.manager.create_server')
+    @patch('medusa.servers.manager.get_servers_from_config', return_value = [])
+    def test_process_create_invokesCreate(self, mock_from, mock_create):
+        self.fs.create_file(get_config_location())
+        args = ['create']
+        manager.process_server(args)
+        mock_create.assert_called_once()
         pass

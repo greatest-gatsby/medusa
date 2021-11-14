@@ -23,11 +23,11 @@ def process_config(args):
     cmd = parser.parse_args(args)
 
     if (cmd.action == 'get'):
-        val = get_config_value(cmd.property)
-        if (val is None):
-            print('No key named', cmd.property)
-        else:
+        try:
+            val = get_config_value(cmd.property)
             print(val)
+        except KeyError:
+            print('Invalid key', cmd.property)
     elif (cmd.action == 'set'):
         set_config_value(cmd.property, cmd.value)
     elif (cmd.action == 'init'):
@@ -48,7 +48,6 @@ def get_config_value(key: str):
         The key whose value will be retrieved. If the string is null
         or empty, then a KeyError will be raised.
 
-    
     Raises
     ------
         KeyError

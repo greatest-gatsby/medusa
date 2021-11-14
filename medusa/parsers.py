@@ -33,8 +33,8 @@ def get_server_parsers():
     server_subparsers = server_parser.add_subparsers(dest='action')
 
     server_create_parser = server_subparsers.add_parser('create', parents=[arg_verbose])
-    server_create_parser.add_argument("path", help='Path to directory relative to the server directory')
-    server_create_parser.add_argument('-a', '--alias')
+    server_create_parser.add_argument('-p', '--path', help='Path to directory relative to the server directory')
+    server_create_parser.add_argument('-a', '--alias', help='Human-friendly nickname to give this server')
     server_create_parser.add_argument('-t', '--type', help='Type of server',
         choices=['vanilla', 'forge', 'spigot', 'paper'])
 

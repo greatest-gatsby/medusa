@@ -1,14 +1,10 @@
-from argparse import ArgumentError
-import builtins
-from typing import Type
 from pyfakefs.fake_filesystem_unittest import TestCase
-from pyfakefs import fake_filesystem
 
 import json
 from json import JSONDecodeError
 import unittest
 import unittest.mock
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import medusa.config
 import medusa.parsers
@@ -23,34 +19,26 @@ class ConfigTestCase(TestCase):
     @unittest.mock.patch('builtins.print')
     def test_config_process_noSubcommand(self, mock_print, conf_parser):
         newArgs = []
-        fakeParser = medusa.parsers
-        fakeParser.parse_args = MagicMock()
-        conf_parser = MagicMock(return_value=fakeParser)
 
-        with unittest.mock.patch.object(fakeParser, 'get_config_parsers', wraps=fakeParser.get_config_parsers) as faked:
-            medusa.config.process_config(newArgs)
-            mock_print.assert_called_with('Please specify a subcommand for `config`')
-            mock_print.assert_called_once()
+        medusa.config.process_config(newArgs)
+        mock_print.assert_called_with('Please specify a subcommand for `config`')
+        mock_print.assert_called_once()
             # fakeParser.print_usage.assert_called_once()
             # todo: actually verify print_usage gets called here
     
     # Verifies that the `get` subcommand triggers `get_config_value(key)`
+    @unittest.mock.patch('medusa.config.get_config_value', return_value='Planted value')
     @unittest.mock.patch('builtins.print')
-    def test_config_process_get(self, mock_print):
+    def test_config_process_get(self, mock_print, mock_get_conf_val):
         arg = ['get', 'unused-key']
-        medusa.config.get_config_value = MagicMock(return_value='Planted value')
-
         medusa.config.process_config(arg)
-        
         mock_print.assert_called_with('Planted value')
 
     @patch('builtins.print')
     @patch('medusa.config.set_config_value')
     def test_config_process_set(self, mock_print, set_conf_val):
         arg = ['set', 'unused-key', 'incredible value!']
-
         medusa.config.process_config(arg)
-
         set_conf_val.assert_not_called()
 
     # Verifies that passing an empty key to getConfigValue(key) won't throw
@@ -116,27 +104,30 @@ class ConfigTestCase(TestCase):
     def test_config_process_getConfigKey_printErrorIfEmptyKey(self, mock_print, mock_err):
         args = ['get', '']
         medusa.config.process_config(args)
-        mock_print.assert_called_once_with('No key named', '')
+        mock_print.assert_called_once_with('Invalid key', '')
     
     # Verifies that an error is printed if the given key is not found in the config  
+    @unittest.mock.patch('medusa.config.get_config_value')
     @unittest.mock.patch('builtins.print')
-    def test_config_process_getConfigKey_noMatchingKey(self, mock_print):
+    def test_config_process_getConfigKey_noMatchingKey(self, mock_print, mock_get_config_val):
         key_name = 'fake key'
         args = ['get', key_name]
         medusa.config.get_config_value = MagicMock(return_value=None)
         medusa.config.process_config(args)
-        mock_print.assert_called_once_with('No key named',key_name)
-       
+        mock_print.assert_called_once_with(None)
+    
+    @unittest.mock.patch('medusa.config.init_config')
     # Verifies that `config init` invokes the config initialization method
-    def test_config_process_init_invokesInitConfig(self):
+    def test_config_process_init_invokesInitConfig(self, mock_init):
         args = ['init']
         medusa.config.init_config = MagicMock()
         medusa.config.process_config(args)
         medusa.config.init_config.assert_called_once_with(None)
     
     # Verifies that `config where` prints the config location
+    @unittest.mock.patch('medusa.config.get_config_location')
     @unittest.mock.patch('builtins.print')
-    def test_config_process_where_printsConfigLocation(self, mock_print):
+    def test_config_process_where_printsConfigLocation(self, mock_print, mock_loc):
         args = ['where']
         planted_path = '/bridge/to/terabythea'
         medusa.config.get_config_location = MagicMock(return_value = planted_path)

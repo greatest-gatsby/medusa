@@ -17,7 +17,7 @@ class ParsersTestCase(TestCase):
     # Verifies that the server parser accepts the `create` subcommand
     # with a path and optional arguments
     def test_parser_server_create_opts(self):
-        args = ['create', 'a path', '-a', 'Alias Maximus', '-t', 'forge']
+        args = ['create', '-p', 'a path', '-a', 'Alias Maximus', '-t', 'forge']
         parser = medusa.parsers.get_server_parsers()
 
         args_parsed = parser.parse_args(args)
