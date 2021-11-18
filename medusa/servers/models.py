@@ -19,10 +19,10 @@ class Server:
     corresponding Controller.
     """
     
-    Path: str
+    Path: str = ''
     """Path to the server"""
     
-    Alias: str
+    Alias: str = ''
     """Human-friendly name for the server"""
 
     Type: ServerType
@@ -37,7 +37,7 @@ class Server:
     def __eq__(self, other):
         return self.is_identifiable_by(other)
 
-    def is_identifiable_by(this, identifier: str):
+    def is_identifiable_by(self, identifier: str):
         """
         Determines whether the given string is a valid identifier for this server.
         Works by matching Alias then Path, in that order.
@@ -47,11 +47,10 @@ class Server:
             boolean
                 `True` if the given string identifies this server, else `False`.
         """
-        if this.Alias == identifier or this.Path == identifier:
+        if self.Alias == identifier or self.Path == identifier:
             return True
         
         return False
-        
 
 class ServerController(abc.ABC):
     info: Server

@@ -132,4 +132,4 @@ def init_config(verbosity = None):
     print('Created new Medusa config at', os.path.abspath(get_config_location()))
 
 def get_config_location():
-    return "data/medusa.json"
+    return os.path.abspath('data/medusa.json')

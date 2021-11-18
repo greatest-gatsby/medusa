@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 from pprint import pprint
+from types import new_class
 from prettytable import PrettyTable
 import argparse
 
@@ -56,22 +57,10 @@ def process_server(args):
             srv.Type = args.value
         
         update_server(args.identifier, srv)
-    elif (args.action == 'alias'):
-        srv = get_server_by_identifier(args.identifier)
-        if (srv is None):
-            print('No server "{}"'.format(args.identifier))
-            return
-        
-        if (args.new_alias == '' or args.new_alias is None):
-            srv.Alias = None
-        else:
-            srv.Alias = args.new_alias
-        update_server(srv.Path, srv)
-
     else:
         parser.print_help()
 
-def scan_directory_for_servers(scan_path: str = ""):
+def scan_directory_for_servers(scan_path: str = "", verbosity: int = 1):
     """
     Searches the named directory for any servers that aren't
     already registered. Returns the new servers that were discovered.
@@ -82,6 +71,9 @@ def scan_directory_for_servers(scan_path: str = ""):
             Path to the directory to scan. If omitted, the server directory
             set in the config will be used. File-access exceptions are not caught
             within this method!
+            
+        verbosity: int
+            Level of verbosity to use. The higher the number, the more verbose the output.
 
     Returns
     -------
@@ -92,39 +84,39 @@ def scan_directory_for_servers(scan_path: str = ""):
     global _servers
     if (scan_path == ""):
         data_dir = config.get_config_value('server_directory')
-    
-    print('Scanning for existing servers in', data_dir)
+    else:
+        data_dir = scan_path
+        
+    if verbosity > 0:
+        print('Scanning for existing servers in', data_dir)
 
     dataset = os.scandir(data_dir)
+
+    if _servers != None and len(_servers) > 0:
+    # remove entries for servers that no longer exist
+        for saved in reversed(_servers):
+            if not os.path.isdir(saved.Path):
+                _servers.remove(saved)
+
+    # scan for servers in the server directory
     new_count = 0
-    if (dataset is None):
-        print('Didn\'t find any servers')
-        return 0
-    else:
-        if _servers != None and len(_servers) > 0:
-        # remove entries for servers that no longer exist
-            for saved in reversed(_servers):
-                if not os.path.isdir(saved.Path):
-                    _servers.remove(saved)
+    for dir in dataset:        
+        # reject non-servers unless user manually adds them
+        dir_type = determine_server_type(dir.path)
+        if dir_type == ServerType.NOTASERVER:
+            continue
+        
+        # record any successes
+        regSuccess = register_server(dir.path ,dir_type)
+        if regSuccess:
+            new_count += 1
 
-        # scan for servers in the server directory
-        for dir in dataset:
-            # reject non-dirs
-            if not dir.is_dir:
-                continue
-            
-            # reject non-servers unless user manually adds them
-            dir_type = determine_server_type(dir.path)
-            if dir_type == ServerType.NOTASERVER:
-                continue
-            
-            # record any successes
-            regSuccess = register_server(dir.path ,dir_type)
-            if regSuccess:
-                new_count += 1
-
-        print('Found {} servers'.format(new_count))
-        return new_count
+    if verbosity > 0:
+        if new_count > 0:
+            print('Found {} servers'.format(new_count))
+        else:
+            print('Didn\'t find any servers')
+    return new_count
 
 
 
@@ -146,7 +138,7 @@ def list_servers():
 
     print(x)
 
-def get_servers_from_config():
+def get_servers_from_config() -> list[Server]:
     """
     Returns a list of all the servers registered in Medusa's config.
     Since this function will always read from disk, `get_servers()`
@@ -165,20 +157,13 @@ def get_servers_from_config():
     """
     if not os.path.isfile(config.get_config_location()):
         raise FileNotFoundError(config.get_config_location(), 'is not a file.')
-    try:
-        with open(config.get_config_location(), 'r') as f:
-            data_string = f.read()
-            data_set = jsonpickle.decode(data_string)
-            data_set = data_set['server_registry']
-            return data_set
-    except json.JSONDecodeError as jde:
-        print('Error decoding data file')
-        raise
-    except KeyError as ae:
-        print('Could not find "servers" node')
-        raise
+    with open(config.get_config_location(), 'r') as f:
+        data_string = f.read()
+        data_set = jsonpickle.decode(data_string)
+        data_set = data_set['server_registry']
+        return data_set
 
-def get_servers():
+def get_servers() -> list[Server]:
     """
     Returns a list of all of the servers registered with Medusa.
     """
@@ -257,22 +242,19 @@ def update_server(old_id: str, updated: Server):
     """
     target = get_server_by_identifier(old_id)
     if target is None:
-        raise KeyError('No server', old_id)
+        raise KeyError(f'No server "{old_id}"')
 
     # Update servers in memory
     _servers.remove(target)
     _servers.append(updated)
 
-    # Read in current config
-    with open(config.get_config_location(), 'w+') as data_file:
-        try:
-            data = jsonpickle.decode(data_file.read())
-            data['server_registry'] = _servers
-            data_file.seek(0)
-            data_file.write(jsonpickle.encode(data))
-        except json.JSONDecodeError as ex:
-            print('Error reading servers file while registering new server')
-            raise
+    # Read in current config file, write updated server
+    path = config.get_config_location()
+    with open(path, 'a+') as data_file:
+        data_file.seek(0)
+        data = jsonpickle.decode(data_file.read())
+        data['server_registry'] = _servers
+        data_file.write(jsonpickle.encode(data))
 
     pass
 
@@ -302,9 +284,6 @@ def register_server(path: str, srv_type: ServerType, alias: str = None):
         IOError
             If there is an error reading or writing the config file from/to disk
     """
-    global _servers
-    if _servers == None:
-        _servers = []
 
     new = Server()
     new.Path = os.path.abspath(path)
@@ -313,55 +292,33 @@ def register_server(path: str, srv_type: ServerType, alias: str = None):
     if alias:
         alias = alias.strip()
 
-    if _servers is not None and len(_servers) > 0:
-        for srv in _servers:
-            if (srv.Path == new.Path):
-                return False
-            if (srv.Alias == new.Alias and srv.Alias):
-                return False
+    for srv in get_servers():
+        if srv.is_identifiable_by(srv.Path):
+            return False
 
-    _servers.append(new)
+    # Read in current config
+    with open(config.get_config_location(), 'r') as data_file:
+        data = jsonpickle.decode(data_file.read())
+    
+    # Write .medusa to the server directory
+    with open(os.path.join(new.Path,'.medusa'), 'w') as dotmedusa:
+        # If alias is given, then the base dotmedusa file must be modified before writing to disk
+        if new.Alias:
+            dm = json.loads(filebases.DOT_MEDUSA)
+            dm["metadata"]["alias"] = new.Alias
+            dotmedusa.write(json.dumps(dm))
+        else:
+            dotmedusa.write(filebases.DOT_MEDUSA)
 
-    try:
-        # Read in current config
-        with open(config.get_config_location(), 'r') as data_file:
-            try:
-                data = jsonpickle.decode(data_file.read())
-            except json.JSONDecodeError as ex:
-                print('Error reading servers file while registering new server')
-                raise
+    # Write entry to server_reigstry in config
+    with open(config.get_config_location(), 'w') as data_file:
+        set = get_servers()
+        set.append(new)
+        data['server_registry'] = set
+        encoded = jsonpickle.encode(data)
+        data_file.write(encoded)
         
-        # Write .medusa to the server directory
-        with open(os.path.join(new.Path,'.medusa'), 'w') as dotmedusa:
-            try:
-                # If alias is given, then the base dotmedusa file must be modified before writing to disk
-                if new.Alias:
-                    dm = json.loads(filebases.DOT_MEDUSA)
-                    dm["metadata"]["alias"] = new.Alias
-                    dotmedusa.write(json.dumps(dm))
-                else:
-                    dotmedusa.write(filebases.DOT_MEDUSA)
-            except:
-                print('Error writing .medusa to', os.path.join(new.Path,'.medusa') ,'. Does this user have permission to write there?')
-                raise
-
-        # Write entry to server_reigstry in config
-        with open(config.get_config_location(), 'w') as data_file:
-            try:
-                data['server_registry'] = _servers
-                encoded = jsonpickle.encode(data)
-                data_file.write(encoded)
-            except json.JSONEncodeError as ex:
-                print('Error writing servers file while registering new server', ex)
-                raise
-
-        # success
-        # print('Registered', srv_type, 'server at', path)
-        return True
-
-    except json.JSONDecodeError:
-        print("Error writing servers to disk")
-        raise
+    return True
 
 def determine_server_type(srv_dir: str):
     """

@@ -115,7 +115,8 @@ class ServerTestCase(TestCase):
         self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
         self.fs.create_dir('/false/path')
 
-        assert medusa.servers.manager.register_server('/false/path', medusa.servers.manager.ServerType.SPIGOT, 'Unbelievable')
+        result =  medusa.servers.manager.register_server('/false/path', medusa.servers.manager.ServerType.SPIGOT, 'Unbelievable')
+        self.assertTrue(result)
 
         with open(medusa.config.get_config_location(), 'r') as conf:
             conf_obj = json.load(conf)
@@ -138,6 +139,21 @@ class ServerTestCase(TestCase):
         with open(path, 'r') as dotmed:
             med_json = json.load(dotmed)
             assert med_json['metadata']['alias'] == 'Monsieur Increible'
+            
+    # Verifies that `register_server` writes the `.medusa` file
+    def test_server_register_noAliasWritesDotMedusa(self):
+        path = os.path.join('/inventive/trail', '.medusa')
+        self.fs.create_dir('/inventive/trail')
+        file = jsonpickle.decode(medusa.filebases.DATA)
+        self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
+
+        assert not os.path.exists(path)
+
+        assert medusa.servers.manager.register_server('/inventive/trail', medusa.servers.manager.ServerType.SPIGOT)
+
+        with open(path, 'r') as dotmed:
+            med_json = json.load(dotmed)
+            self.assertIsNone(med_json['metadata']['alias'])
 
     # Verifies that `register_server` returns False when
     # attempting to register the same server twice
