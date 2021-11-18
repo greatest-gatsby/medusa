@@ -15,6 +15,7 @@ from .. import filebases
 from .. import parsers
 from .models import Server
 from .models import ServerType
+from . import forge
 
 serv_subparser = None
 _servers = []
@@ -102,7 +103,10 @@ def scan_directory_for_servers(scan_path: str = "", verbosity: int = 1):
     new_count = 0
     for dir in dataset:        
         # reject non-servers unless user manually adds them
-        dir_type = determine_server_type(dir.path)
+        dir_type = ServerType.NOTASERVER
+        if (forge.is_path_forge(dir.path)):
+            dir_type = ServerType.FORGE
+            
         if dir_type == ServerType.NOTASERVER:
             continue
         
@@ -319,70 +323,6 @@ def register_server(path: str, srv_type: ServerType, alias: str = None):
         data_file.write(encoded)
         
     return True
-
-def determine_server_type(srv_dir: str):
-    """
-    Examines the files in a given server directory to determine its type.
-    Currently the search works primarily on key file names. For example,
-    Spigot and Forge both include their names in the jar filenames.
-
-    Parameters
-    ----------
-        srv_dir: str
-            Path to server directory to be examined.
-
-    Returns
-    -------
-        ServerType
-            Type of Minecraft server this was determined to be
-    """
-    srv_dir = os.path.abspath(srv_dir)
-    for dir_path, dir_names, f_names in os.walk(srv_dir):
-        # don't enter subdirectories
-        if dir_path != srv_dir:
-            continue
-        
-        # strategies:
-        #   1   .jar files
-        #   2.  .yml config files
-        strat_jar = ServerType.NOTASERVER
-        strat_yml = ServerType.NOTASERVER
-
-        # iterate through file names, recording each strategy's guess
-        for file in f_names:
-            file = file.lower()
-
-            # strat 1 - jar files
-            if file.endswith('.jar'):
-                if 'spigot' in file:
-                    strat_jar =  ServerType.SPIGOT
-                elif 'forge' in file:
-                    strat_jar =  ServerType.FORGE
-                elif 'paper' in file:
-                    strat_jar = ServerType.PAPER
-                #else:
-                #    strat_jar = ServerType.VANILLA
-            
-            # strat 2 - yml files
-            if file.endswith('.yml') or file.endswith('.yaml'):
-                if 'spigot' in file:
-                    strat_yml =  ServerType.SPIGOT
-                elif 'forge' in file:
-                    strat_yml =  ServerType.FORGE
-                elif 'paper' in file:
-                    strat_yml = ServerType.PAPER
-
-        # assume notasever
-        # return consensus if it is a server
-        if strat_jar == strat_yml and strat_jar != ServerType.NOTASERVER:
-            return strat_jar
-        else:
-            # skip strat 1 if it said not a server
-            if strat_jar == ServerType.NOTASERVER:
-                return strat_yml
-            else:
-                return strat_jar
-
 
 def find_startup_script_paths(path: str):
     """

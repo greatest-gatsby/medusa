@@ -154,28 +154,26 @@ class ManagerTests(TestCase):
         #mock_print.assert_called_with('Scanning for existing servers in', '/new/dir')
         self.assertEqual(2, mock_print.call_count, 'Print should have been called twice: once when beginning scan and once to recap')
     
+    @patch('medusa.servers.forge.is_path_forge', return_value = True)
     @patch('builtins.print')
     @patch('medusa.servers.manager.register_server', return_value = 1)    
-    @patch('medusa.servers.manager.determine_server_type', return_value = manager.ServerType.VANILLA)
-    def test_scan_removesDeletedServers(self, mock_determine, mock_register, mock_print):
+    def test_scan_removesDeletedServers(self, mock_register, mock_print, mock_is_forge):
         # Create two servers, but only keep 1 of them on disk
         srv_stays = Server()
         srv_stays.Path = '/srvs/creative1'
-        srv_stays.Type = manager.ServerType.VANILLA
+        srv_stays.Type = manager.ServerType.FORGE
         srv_delete = Server()
         srv_delete.Path = '/srvs/creative2'
-        srv_delete.Type = manager.ServerType.VANILLA
+        srv_delete.Type = manager.ServerType.FORGE
         self.fs.create_dir(srv_stays.Path)
         
         manager._servers = [srv_stays, srv_delete]
         result = manager.scan_directory_for_servers(scan_path='/srvs/', verbosity=1)
-        mock_determine.assert_called_once_with(srv_stays.Path)
-        mock_register.assert_called_once_with(srv_stays.Path, manager.ServerType.VANILLA)
+        mock_register.assert_called_once_with(srv_stays.Path, manager.ServerType.FORGE)
         mock_print.assert_called_with('Found 1 servers')
         self.assertEqual(1, result)
         
-    @patch('medusa.servers.manager.determine_server_type', return_value = manager.ServerType.NOTASERVER)
-    def test_scan_skipsNonServers(self, mock_determine):
+    def test_scan_skipsNonServers(self):
         self.fs.create_dir('/srvs/creative1')
         self.fs.create_file('/srvs/trickytricky')
         result = manager.scan_directory_for_servers(scan_path='/srvs/', verbosity=0)
