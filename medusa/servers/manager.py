@@ -18,7 +18,7 @@ from .models import ServerType
 from . import forge
 
 serv_subparser = None
-_servers = []
+_servers = None
 
 def process_server(args):
     """
@@ -174,7 +174,7 @@ def get_servers() -> list[Server]:
     global _servers
     if _servers is None:
         _servers = get_servers_from_config()
-    
+
     return _servers
 
 def get_server_by_identifier(identifier: str):
@@ -297,7 +297,7 @@ def register_server(path: str, srv_type: ServerType, alias: str = None):
         alias = alias.strip()
 
     for srv in get_servers():
-        if srv.is_identifiable_by(srv.Path):
+        if srv.is_identifiable_by(path):
             return False
 
     # Read in current config

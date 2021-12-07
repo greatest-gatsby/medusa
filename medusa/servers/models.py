@@ -1,7 +1,7 @@
 import abc
 from enum import Enum
 import os
-import pathlib
+from pathlib import PurePath
 
 from .. import parsers
 
@@ -28,9 +28,6 @@ class Server:
     Type: ServerType
     """Type of the server"""
 
-    StartupScriptPath: str
-    """Path to the startup script"""
-
     def __str__(self):
         return "{}\t{}\t{}".format(self.Alias, self.Path, self.Type)
 
@@ -50,10 +47,19 @@ class Server:
         if self.Alias == identifier or self.Path == identifier:
             return True
         
+        # match directory name of a server
+        parts = PurePath(self.Path).parts
+        if identifier == parts[-1]:
+            return True
+        
         return False
 
 class ServerController(abc.ABC):
     info: Server
+    """Information regarding this server"""
+    
+    startup_script_path: str
+    """Path to the startup script"""
     
     @abc.abstractmethod
     def get_parser(cls):
