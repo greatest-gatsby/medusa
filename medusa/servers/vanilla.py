@@ -3,7 +3,9 @@ from os import PathLike
 import os
 from typing import Union
 
-from .models import ServerController, ServerType, Server
+from medusa.servers import VANILLA
+
+from .models import ServerController, Server
 from .. import parsers
 
 def is_path_vanilla(directory: PathLike) -> bool:
@@ -28,6 +30,11 @@ def is_path_vanilla(directory: PathLike) -> bool:
                     
     return strat_jar
 
+class VanillaServer(Server):
+    def __init__(self):
+        super().__init()
+        self.Type = VANILLA
+
 class VanillaController(ServerController):
     """
     Provides control of a vanilla Minecraft server.
@@ -37,7 +44,7 @@ class VanillaController(ServerController):
         pass
 
     def __init__(self, srv: Server):
-        if srv.Type != ServerType.VANILLA:
+        if srv.Type != VANILLA:
             raise TypeError('Expected Vanilla server but got {}'.format(srv.Type))
         
         self.info = srv

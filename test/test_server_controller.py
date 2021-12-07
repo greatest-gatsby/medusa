@@ -3,8 +3,9 @@ import pyfakefs
 from pyfakefs.fake_filesystem_unittest import TestCase
 from os.path import join
 from unittest.mock import Mock, patch
+from medusa.servers import FORGE
 
-from medusa.servers.models import Server, ServerController, ServerType
+from medusa.servers.models import Server, ServerController
 from medusa.servers.forge import ForgeController
 
 class ServerControllerTests(TestCase):
@@ -17,7 +18,7 @@ class ServerControllerTests(TestCase):
         self.setUpPyfakefs()
 
         self.srv.Path = self.VIR_PATH
-        self.srv.Type = ServerType.FORGE
+        self.srv.Type = FORGE
         self.control = ForgeController(self.srv)
 
     def test_parser_passthru(self):

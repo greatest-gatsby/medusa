@@ -3,7 +3,9 @@ from os import PathLike
 import os
 from typing import Union
 
-from .models import ServerController, ServerType, Server
+from medusa.servers import FORGE
+
+from .models import ServerController, Server
 from .. import parsers
 
 def is_path_forge(directory: PathLike) -> bool:
@@ -28,6 +30,11 @@ def is_path_forge(directory: PathLike) -> bool:
                     
     return strat_jar
 
+class ForgeServer(Server):
+    def __init__(self):
+        super().__init()
+        self.Type = FORGE
+
 class ForgeController(ServerController):
     """
     Provides control of a Forge-based Minecraft server.
@@ -37,7 +44,7 @@ class ForgeController(ServerController):
         pass
 
     def __init__(self, srv: Server):
-        if srv.Type != ServerType.FORGE:
+        if srv.Type != FORGE:
             raise TypeError('Expected Forge server but got {}'.format(srv.Type))
         
         self.info = srv

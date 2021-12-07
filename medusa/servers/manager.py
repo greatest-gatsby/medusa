@@ -16,8 +16,7 @@ from .. import config
 from .. import filebases
 from .. import parsers
 from .models import Server
-from .models import ServerType
-from . import forge
+from . import FABRIC, FORGE, NOTASERVER, VANILLA, forge
 
 serv_subparser = None
 _servers = None
@@ -105,15 +104,15 @@ def scan_directory_for_servers(scan_path: str = "", verbosity: int = 1):
     new_count = 0
     for dir in dataset:        
         # reject non-servers unless user manually adds them
-        dir_type = ServerType.NOTASERVER
+        dir_type = NOTASERVER
         if (forge.is_path_forge(dir.path)):
-            dir_type = ServerType.FORGE
+            dir_type = FORGE
         elif (fabric.is_path_fabirc(dir.path)):
-            dir_type = ServerType.FABRIC
+            dir_type = FABRIC
         elif (vanilla.is_path_vanilla(dir.path)):
-            dir_type = ServerType.VANILLA
-            
-        if dir_type == ServerType.NOTASERVER:
+            dir_type = VANILLA
+
+        if dir_type == NOTASERVER:
             continue
         
         # record any successes
@@ -268,14 +267,14 @@ def update_server(old_id: str, updated: Server):
 
     pass
 
-def register_server(path: str, srv_type: ServerType, alias: str = None):
+def register_server(path: str, srv_type: str, alias: str = None):
     """
     Links Medusa to a Minecraft server that already exists, adding an entry in the
     central save file and creating a `.medusa` file in the server directory.
 
     Parameters
     ----------
-        srv_type: ServerType
+        srv_type: str
             The type of the server being registered, such as Vanilla or Fabric.
 
         alias: str (Optional)

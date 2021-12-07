@@ -6,9 +6,9 @@ from pyfakefs.fake_filesystem_unittest import TestCase
 import medusa
 
 from medusa.filebases import DATA
-from medusa.servers import manager
+from medusa.servers import FORGE, manager
 from medusa.config import get_config_location
-from medusa.servers.models import Server, ServerType
+from medusa.servers.models import Server
 
 class ManagerTests(TestCase):
     VIR_PATH = 'D:\\Minecraft\\Servers'
@@ -161,15 +161,15 @@ class ManagerTests(TestCase):
         # Create two servers, but only keep 1 of them on disk
         srv_stays = Server()
         srv_stays.Path = '/srvs/creative1'
-        srv_stays.Type = manager.ServerType.FORGE
+        srv_stays.Type = FORGE
         srv_delete = Server()
         srv_delete.Path = '/srvs/creative2'
-        srv_delete.Type = manager.ServerType.FORGE
+        srv_delete.Type = FORGE
         self.fs.create_dir(srv_stays.Path)
         
         manager._servers = [srv_stays, srv_delete]
         result = manager.scan_directory_for_servers(scan_path='/srvs/', verbosity=1)
-        mock_register.assert_called_once_with(srv_stays.Path, manager.ServerType.FORGE)
+        mock_register.assert_called_once_with(srv_stays.Path, FORGE)
         mock_print.assert_called_with('Found 1 servers')
         self.assertEqual(1, result)
         

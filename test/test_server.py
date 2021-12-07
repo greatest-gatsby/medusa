@@ -61,7 +61,7 @@ class ServerTestCase(TestCase):
         srv1 = medusa.servers.manager.Server()
         srv1.Alias = 'Friendly'
         srv1.Path = '/srv/friends forever/s1'
-        srv1.Type = medusa.servers.manager.ServerType.PAPER
+        srv1.Type = medusa.servers.PAPER
 
         medusa.servers.manager._servers = [srv1]
         medusa.servers.manager.list_servers()
@@ -87,14 +87,14 @@ class ServerTestCase(TestCase):
         test_data = medusa.servers.manager.Server()
         test_data.Alias = 'Advanced Cosmonaut'
         test_data.Path = 'Farout Dir/'
-        test_data.Type = medusa.servers.manager.ServerType.FORGE
+        test_data.Type = medusa.servers.FORGE
         self.plant_server([test_data])
 
         servers = medusa.servers.manager.get_servers_from_config()
         self.assertEqual(1, len(servers), 'Should have gotten exactly the 1 server we planted')
         self.assertEqual('Advanced Cosmonaut', servers[0].Alias)
         assert servers[0].Path == 'Farout Dir/'
-        assert servers[0].Type == medusa.servers.manager.ServerType.FORGE
+        assert servers[0].Type == medusa.servers.FORGE
 
     # Verifies that `get_servers()` reads from config if `_servers` is None.
     # If there are no servers, then `_servers` should be an empty list --
@@ -115,7 +115,7 @@ class ServerTestCase(TestCase):
         self.fs.create_file(medusa.config.get_config_location(), contents = jsonpickle.encode(file))
         self.fs.create_dir('/false/path')
 
-        result =  medusa.servers.manager.register_server('/false/path', medusa.servers.manager.ServerType.SPIGOT, 'Unbelievable')
+        result =  medusa.servers.manager.register_server('/false/path', medusa.servers.SPIGOT, 'Unbelievable')
         self.assertTrue(result)
 
         with open(medusa.config.get_config_location(), 'r') as conf:
@@ -134,7 +134,7 @@ class ServerTestCase(TestCase):
 
         assert not os.path.exists(path)
 
-        assert medusa.servers.manager.register_server('/inventive/trail', medusa.servers.manager.ServerType.SPIGOT, 'Monsieur Increible')
+        assert medusa.servers.manager.register_server('/inventive/trail', medusa.servers.SPIGOT, 'Monsieur Increible')
 
         with open(path, 'r') as dotmed:
             med_json = json.load(dotmed)
@@ -149,7 +149,7 @@ class ServerTestCase(TestCase):
 
         assert not os.path.exists(path)
 
-        assert medusa.servers.manager.register_server('/inventive/trail', medusa.servers.manager.ServerType.SPIGOT)
+        assert medusa.servers.manager.register_server('/inventive/trail', medusa.servers.SPIGOT)
 
         with open(path, 'r') as dotmed:
             med_json = json.load(dotmed)
@@ -162,10 +162,10 @@ class ServerTestCase(TestCase):
         existing_server = medusa.servers.manager.Server()
         existing_server.Alias = 'Yo bobby run it'
         existing_server.Path = '/inventive/trail'
-        existing_server.Type = medusa.servers.manager.ServerType.VANILLA
+        existing_server.Type = medusa.servers.VANILLA
         self.plant_server([existing_server])
 
-        assert not medusa.servers.manager.register_server('/inventive/trail', medusa.servers.manager.ServerType.VANILLA, 'Yo bobby run it')
+        assert not medusa.servers.manager.register_server('/inventive/trail', medusa.servers.VANILLA, 'Yo bobby run it')
 
     # Verifies that `deregister_server` raises an error if
     # the given identifier is None or empty
@@ -195,7 +195,7 @@ class ServerTestCase(TestCase):
         existing_server = medusa.servers.manager.Server()
         existing_server.Alias = 'delete me!'
         existing_server.Path = '/creative/venture'
-        existing_server.Type = medusa.servers.manager.ServerType.FORGE
+        existing_server.Type = medusa.servers.FORGE
         self.plant_server([existing_server])
         
         existing_server.is_identifiable_by = unittest.mock.MagicMock(return_value=True)
@@ -215,7 +215,7 @@ class ServerTestCase(TestCase):
         existing_server = medusa.servers.manager.Server()
         existing_server.Alias = 'traaash'
         existing_server.Path = '/unique/outing'
-        existing_server.Type = medusa.servers.manager.ServerType.FORGE
+        existing_server.Type = medusa.servers.FORGE
         self.plant_server([existing_server])
         
         existing_server.is_identifiable_by = unittest.mock.MagicMock(return_value=True)

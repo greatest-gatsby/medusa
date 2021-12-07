@@ -3,14 +3,13 @@ import argparse
 from unittest import TestCase
 from unittest.mock import Mock
 
-from medusa.servers import forge
-from medusa.servers import models
+from medusa.servers import forge, models, FORGE
 
 class ForgeParserTests(TestCase):
     forge_srv = models.Server
     forge_srv.Alias = 'Test Alias'
     forge_srv.Path = '/srv/test dir/mc'
-    forge_srv.Type = models.ServerType.FORGE
+    forge_srv.Type = FORGE
     forge_control = forge.ForgeController(forge_srv)
 
     def test_forge_run_start(self):

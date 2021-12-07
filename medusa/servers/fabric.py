@@ -1,10 +1,10 @@
-import argparse
 from os import PathLike
 import os
-from typing import Union
 
-from .models import ServerController, ServerType, Server
-from .. import parsers
+from medusa.servers import FABRIC
+
+from .models import ServerController, Server
+
 
 def is_path_fabirc(directory: PathLike) -> bool:
     """
@@ -28,6 +28,11 @@ def is_path_fabirc(directory: PathLike) -> bool:
                     
     return strat_jar
 
+class FabricServer(Server):
+    def __init__(self):
+        super().__init()
+        self.Type = FABRIC
+
 class FabricController(ServerController):
     """
     Provides control of a Forge-based Minecraft server.
@@ -37,7 +42,7 @@ class FabricController(ServerController):
         pass
 
     def __init__(self, srv: Server):
-        if srv.Type != ServerType.FABRIC:
+        if srv.Type != FABRIC:
             raise TypeError('Expected Fabric server but got {}'.format(srv.Type))
         
         self.info = srv

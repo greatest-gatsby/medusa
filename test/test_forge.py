@@ -1,7 +1,6 @@
 from pyfakefs.fake_filesystem_unittest import TestCase
 
-from medusa.servers import forge
-from medusa.servers import models
+from medusa.servers import forge, models, FORGE, NOTASERVER
 
 class ForgeTests(TestCase):
     def setUp(self):
@@ -11,7 +10,7 @@ class ForgeTests(TestCase):
         srv = models.Server()
         srv.Alias = 'MR BOND'
         srv.Path = '/media/pron/trucks'
-        srv.Type = models.ServerType.NOTASERVER
+        srv.Type =  NOTASERVER
         
         with self.assertRaises(TypeError):
             forge.ForgeController(srv)
@@ -20,13 +19,13 @@ class ForgeTests(TestCase):
         srv = models.Server()
         srv.Alias = 'All The Mods Again'
         srv.Path = 'C:\\Windows\\Legit\\big wooden horse\\atm6'
-        srv.Type = models.ServerType.FORGE
+        srv.Type =  FORGE
 
         control = forge.ForgeController(srv)
 
         assert control.info.Alias == 'All The Mods Again'
         assert control.info.Path == 'C:\\Windows\\Legit\\big wooden horse\\atm6'
-        assert control.info.Type == models.ServerType.FORGE
+        assert control.info.Type ==  FORGE
         
     def test_determineType_forge(self):
         dest_dir = '/target/directory'

@@ -11,9 +11,15 @@ import medusa.run
 import medusa.servers
 import medusa.servers.manager
 
-# init submodules
-# servers = server.get_servers_from_config()
 
+# init submodules
+from medusa.servers.fabric import FabricController, FabricServer
+from medusa.servers.forge import ForgeController, ForgeServer
+from medusa.servers.vanilla import VanillaController, VanillaServer
+from medusa.servers.models import add_supported_server_type
+add_supported_server_type(medusa.servers.FABRIC, FabricServer, FabricController)
+add_supported_server_type(medusa.servers.FORGE, ForgeServer, ForgeController)
+add_supported_server_type(medusa.servers.VANILLA, VanillaServer, VanillaController)
 
 if __name__ == '__main__':
 

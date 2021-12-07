@@ -2,16 +2,9 @@ import abc
 from enum import Enum
 import os
 from pathlib import PurePath
+from typing import Union
 
 from .. import parsers
-
-class ServerType(object):
-    NOTASERVER = 'NOTASERVER'
-    VANILLA = 'VANILLA'
-    FABRIC = 'FABRIC'
-    FORGE = 'FORGE'
-    SPIGOT = 'SPIGOT'
-    PAPER = 'PAPER'
 
 class Server:
     """
@@ -26,7 +19,7 @@ class Server:
     Alias: str = ''
     """Human-friendly name for the server"""
 
-    Type: ServerType
+    Type: str
     """Type of the server"""
 
     def __str__(self):
@@ -83,3 +76,39 @@ class ServerController(abc.ABC):
     @abc.abstractmethod
     def shutdown(cls):
         pass
+
+
+__supported_server_types = []
+
+def add_supported_server_type(name: str, info: Server, controller: ServerController):
+    global __supported_server_types
+    if (is_type_supported(name)):
+        print('Already know type',name)
+    
+    __supported_server_types.append({'name':name, 'info': info, 'controller': controller})
+    
+def get_supported_type(name: str) -> Union[dict, None]:
+    global __supported_server_types
+    for supported in __supported_server_types:
+        if supported['name'] == name:
+            return supported
+        
+    return None
+
+def is_type_supported(type: Union[str, Server, ServerController]) -> bool:
+    if isinstance(type, str):
+        for supported in __supported_server_types:
+            if supported['name'] == type:
+                return True
+            
+    elif isinstance(type, Server):
+        for supported in __supported_server_types:
+            if supported['info'] == type:
+                return True
+            
+    elif isinstance(type, ServerController):
+        for supported in __supported_server_types:
+            if supported['controller'] == type:
+                return True
+            
+    return False

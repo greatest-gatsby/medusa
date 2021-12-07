@@ -1,8 +1,7 @@
 from medusa.servers.forge import ForgeController
-from medusa.servers.models import ServerType
 from . import parsers
 from . import servers
-from .servers import manager
+from .servers import FORGE, manager
 
 def process_run(args):
     """
@@ -22,7 +21,7 @@ def process_run(args):
         print('No server "{}"'.format(args.identifier))
         return
     else:
-        if srv.Type == ServerType.FORGE:
+        if srv.Type == FORGE:
             controller = ForgeController(srv)
             
         else:
