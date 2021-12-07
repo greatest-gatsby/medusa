@@ -8,6 +8,7 @@ from .. import parsers
 class ServerType(object):
     NOTASERVER = 'NOTASERVER'
     VANILLA = 'VANILLA'
+    FABRIC = 'FABRIC'
     FORGE = 'FORGE'
     SPIGOT = 'SPIGOT'
     PAPER = 'PAPER'

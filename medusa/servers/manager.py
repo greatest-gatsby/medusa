@@ -10,6 +10,8 @@ import argparse
 
 import jsonpickle
 
+from medusa.servers import fabric, vanilla
+
 from .. import config
 from .. import filebases
 from .. import parsers
@@ -106,6 +108,10 @@ def scan_directory_for_servers(scan_path: str = "", verbosity: int = 1):
         dir_type = ServerType.NOTASERVER
         if (forge.is_path_forge(dir.path)):
             dir_type = ServerType.FORGE
+        elif (fabric.is_path_fabirc(dir.path)):
+            dir_type = ServerType.FABRIC
+        elif (vanilla.is_path_vanilla(dir.path)):
+            dir_type = ServerType.VANILLA
             
         if dir_type == ServerType.NOTASERVER:
             continue
